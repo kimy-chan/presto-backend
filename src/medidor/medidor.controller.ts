@@ -31,4 +31,9 @@ export class MedidorController {
   remove(@Param('id') id: string) {
     return this.medidorService.remove(+id);
   }
+
+  @Get('buscar/:codigo')
+  buscarMedidor (@Param('codigo') codigo:string ){
+    return this.medidorService.buscarMedidor(codigo)
+  }
 }

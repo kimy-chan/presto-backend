@@ -3,7 +3,7 @@ import { CreateGastoDto } from './dto/create-gasto.dto';
 import { UpdateGastoDto } from './dto/update-gasto.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Gasto } from './schema/gasto.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 
 @Injectable()
@@ -11,6 +11,7 @@ export class GastoService {
   constructor(@InjectModel(Gasto.name) private readonly gasto:Model<Gasto>){}
   async create(createGastoDto: CreateGastoDto) {
     createGastoDto.costoAqo = createGastoDto.cantidad * createGastoDto.costoUnitario
+    createGastoDto.categoriaGasto = new Types.ObjectId(createGastoDto.categoriaGasto)
     await this.gasto.create(createGastoDto)
     return {status:HttpStatus.CREATED};
   }

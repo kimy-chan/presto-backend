@@ -10,6 +10,7 @@ import { CoreAppModule } from './core-app/core-app.module';
 import { MongooseModule } from '@nestjs/mongoose';
 import { MedidorModule } from './medidor/medidor.module';
 import { CategoriaGastoModule } from './categoria-gasto/categoria-gasto.module';
+import { LecturaModule } from './lectura/lectura.module';
 
 @Module({
   imports: [
@@ -33,7 +34,9 @@ import { CategoriaGastoModule } from './categoria-gasto/categoria-gasto.module';
     
   MedidorModule,
     
-  CategoriaGastoModule
+  CategoriaGastoModule,
+    
+  LecturaModule
 ],
   controllers: [],
   providers: [],

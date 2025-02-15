@@ -13,11 +13,25 @@ export class Medidor {
     @Prop()
     numeroSerie:string
 
+    
+    @Prop()
+    descripcion:string
+
      @Prop({type:String, enum:EstadoMedidorE, default:EstadoMedidorE.activo})
     estado:string
 
      @Prop({type:Types.ObjectId, ref:'Cliente'})
     cliente:Types.ObjectId
+
+      @Prop({type:Types.ObjectId, ref:'Tarifa'})
+    tarifa:Types.ObjectId
+
+    @Prop()
+    direccion:Types.ObjectId
+
+    
+        @Prop()
+        fechaInstalacion:Date
 
      @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
         flag:string

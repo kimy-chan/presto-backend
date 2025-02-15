@@ -1,4 +1,5 @@
-import { IsNotEmpty, IsNumber, IsString } from "class-validator"
+import { IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator"
+import { Types } from "mongoose";
 
 export class CreateGastoDto {
         
@@ -21,6 +22,10 @@ export class CreateGastoDto {
     @IsNumber({}, { message: 'El factor de validez debe ser un número válido' })
     @IsNotEmpty({ message: 'El factor de validez no puede estar vacío' })
     factorValides: number;
+
+    @IsMongoId()
+    @IsNotEmpty()
+    categoriaGasto: Types.ObjectId;
 
     costoAqo:number
 

@@ -5,6 +5,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Medidor } from './schema/medidor.schema';
 import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
+import { EstadoMedidorE } from './enums/estados';
 
 @Injectable()
 export class MedidorService {
@@ -18,6 +19,7 @@ export class MedidorService {
     const codigo = await this.generarCodigo()
     createMedidorDto.codigo =codigo
     createMedidorDto.cliente = new Types.ObjectId(createMedidorDto.cliente)
+      createMedidorDto.tarifa = new Types.ObjectId(createMedidorDto.tarifa)
     await this.medidor.create(createMedidorDto)
     return {status:HttpStatus.CREATED};
   }
@@ -43,6 +45,44 @@ export class MedidorService {
         const codigo = 'M' + countDocuments.toLocaleString().padStart(6,'0')
         return codigo
     }
-  
+   
+    async buscarMedidor(codigo:string){
+      const data = await this.medidor.aggregate([
+          {
+            $match:{
+              codigo:new RegExp(codigo, 'i'),
+              estado:EstadoMedidorE.activo
+            }
+          },
+          {
+            $lookup:{
+              from:'Cliente',
+              foreignField:'_id',
+               localField:'cliente',
+               as:'cliente'
+            }
+          },
+          {
+            $unwind:{path:'$cliente', preserveNullAndEmptyArrays:false}
+          } ,
+          {
+
+            $project:{
+              estado:1,
+              nombre:'$cliente.nombre',
+              codigoCliente:'$cliente.codigo',
+              apellidoPaterno:'$cliente.apellidoPaterno',
+              ci:'$cliente.ci',
+              apellidoMaterno:'$cliente.apellidoMaterno',
+              numeroSerie:1,
+              direccion:1,
+              codigo:1
+
+            }
+          }    
+        ])
+
+      return data[0]
+    }
   
 }

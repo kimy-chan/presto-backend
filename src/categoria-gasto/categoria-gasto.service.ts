@@ -4,6 +4,7 @@ import { UpdateCategoriaGastoDto } from './dto/update-categoria-gasto.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { CategoriaGasto } from './schema/categoriaGasto.schema';
 import { Model } from 'mongoose';
+import { FlagE } from 'src/core-app/enums/flag';
 
 @Injectable()
 export class CategoriaGastoService {
@@ -13,8 +14,9 @@ export class CategoriaGastoService {
     return {status:HttpStatus.CREATED}
   }
 
-  findAll() {
-    return `This action returns all categoriaGasto`;
+   async findAll() {
+    const categorias = await this.categoriaGasto.find({flag:FlagE.nuevo})
+    return categorias;
   }
 
   findOne(id: number) {

@@ -8,8 +8,7 @@ export class CategoriaGasto {
     @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
     flag:string    
     @Prop({type:Date, default:Date.now() })
-    fecha:Date
-        
+    fecha:Date 
 }
 
 export const categoriaGastoSchema = SchemaFactory.createForClass(CategoriaGasto)

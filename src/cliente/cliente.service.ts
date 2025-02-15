@@ -16,7 +16,7 @@ export class ClienteService {
       throw new ConflictException('El ci ya se encuentra registrado')
     }
     const codigo = await this.generarCodigo()
-    await this.cliente.create({
+    const clienteRegistrado= await this.cliente.create({
       apellidoMaterno:createClienteDto.apellidoMaterno,
       apellidoPaterno:createClienteDto.apellidoPaterno,
       celular:createClienteDto.celular,
@@ -26,7 +26,7 @@ export class ClienteService {
        nombre:createClienteDto.nombre
     })
 
-    return {status:HttpStatus.CREATED}
+    return {status:HttpStatus.CREATED, cliente: clienteRegistrado}
   }
 
   async findAll() {
@@ -54,4 +54,9 @@ export class ClienteService {
       return codigo
   }
 
+ async  buscarClietePorCodigo(codigo:string){
+    const cliente = this.cliente.findOne( {flag:FlagE.nuevo, codigo:new RegExp(codigo,'i')})
+    return cliente
+  }
 }
+
