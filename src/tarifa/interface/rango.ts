@@ -7,7 +7,7 @@ export interface RangoI{
       rango2: number;
     
 
-      precio: number;
+      costo: number;
     
       tarifa:Types.ObjectId
 }

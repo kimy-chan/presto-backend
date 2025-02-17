@@ -12,7 +12,7 @@ export class RangoDto {
 
   @IsNumber({}, { message: 'El campo "precio" debe ser un número válido.' })
   @IsNotEmpty({ message: 'El campo "precio" no puede estar vacío.' })
-  precio: number;
+  costo: number;
 
 
 

@@ -6,7 +6,7 @@ import { FlagE } from "src/core-app/enums/flag";
 export class Cliente {
 
     @Prop()
-    codigo:string
+    codigo:number
 
     @Prop()
     ci:string
@@ -23,8 +23,8 @@ export class Cliente {
     @Prop()
     apellidoPaterno:string
 
-    @Prop()
-    direccion:string
+    //@Prop()
+   // direccion:string
     
     @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
     flag:string

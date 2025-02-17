@@ -21,7 +21,7 @@ export class ClienteService {
       apellidoPaterno:createClienteDto.apellidoPaterno,
       celular:createClienteDto.celular,
        codigo:codigo,
-       direccion:createClienteDto.direccion,
+       //direccion:createClienteDto.direccion,
        ci:createClienteDto.ci,
        nombre:createClienteDto.nombre
     })
@@ -50,8 +50,7 @@ export class ClienteService {
   private async generarCodigo(){
       let countDocuments = await this.cliente.countDocuments({flag:FlagE.nuevo}) 
       countDocuments  += 1
-      const codigo = 'C' + countDocuments.toLocaleString().padStart(6,'0')
-      return codigo
+      return countDocuments
   }
 
  async  buscarClietePorCodigo(codigo:string){

@@ -22,7 +22,7 @@ export class TarifaService {
     const tarifa = await this.tarifa.create({nombre:createTarifaDto.nombre})
     for (const rango of createTarifaDto.rangos) {
       const data:RangoI={
-        precio:rango.precio,
+        costo:rango.costo,
         rango1:rango.rango1,
         rango2:rango.rango2,
         tarifa:tarifa._id

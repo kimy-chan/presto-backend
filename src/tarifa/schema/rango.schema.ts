@@ -10,7 +10,7 @@ export class Rango {
     rango2:number
     @Prop({type:Types.ObjectId , ref:'Tarifa'})
     @Prop({type:Number , default:0})
-    precio:number
+    costo:number
     @Prop({type:Types.ObjectId , ref:'Tarifa'})
     tarifa:Types.ObjectId
 

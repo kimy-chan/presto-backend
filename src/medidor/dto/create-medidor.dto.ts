@@ -3,11 +3,11 @@ import { Types } from "mongoose"
 
 export class CreateMedidorDto {
  
-        codigo:string
+    codigo:number
     
-         @IsString({ message: 'El número de serie debe ser un texto válido' })
+    @IsString({ message: 'El número de serie debe ser un texto válido' })
     @IsNotEmpty({ message: 'El número de serie no puede estar vacío' })
-    numeroSerie: string;
+    numeroMedidor: string;
 
     @IsMongoId({ message: 'El cliente debe ser un ID de MongoDB válido' })
     @IsNotEmpty({ message: 'El cliente es obligatorio' })
@@ -27,6 +27,6 @@ export class CreateMedidorDto {
 
     
     @IsString()
-    @IsOptional()
+    @IsNotEmpty()
     direccion: string;
 }

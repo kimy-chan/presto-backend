@@ -1,16 +1,21 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { LecturaService } from './lectura.service';
 import { LecturaController } from './lectura.controller';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Lectura, lecturaSchema } from './schemas/lectura.schema';
-
+import { PagoModule } from 'src/pago/pago.module';
+import { MedidorModule } from 'src/medidor/medidor.module';
 @Module({
     imports:[MongooseModule.forFeature([
         {
           name:Lectura.name, schema:lecturaSchema
         }
-      ])],
+      ]),
+    PagoModule,
+    forwardRef(()=>MedidorModule)
+    ],
   controllers: [LecturaController],
   providers: [LecturaService],
+  exports:[LecturaService]
 })
 export class LecturaModule {}

@@ -8,10 +8,10 @@ import { EstadoMedidorE } from "../enums/estados";
 export class Medidor {
 
      @Prop()
-    codigo:string
+    codigo:number
 
     @Prop()
-    numeroSerie:string
+    numeroMedidor:string
 
     
     @Prop()

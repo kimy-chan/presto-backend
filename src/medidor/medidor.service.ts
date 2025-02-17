@@ -6,15 +6,19 @@ import { Medidor } from './schema/medidor.schema';
 import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { EstadoMedidorE } from './enums/estados';
-
+import { LecturaService } from 'src/lectura/lectura.service';
+import { DataMedidorI } from './interface/dataMedidor';
 @Injectable()
 export class MedidorService {
-  constructor(@InjectModel(Medidor.name) private readonly medidor:Model<Medidor>){}
+  constructor(
+    @InjectModel(Medidor.name) private readonly medidor:Model<Medidor>,
+    private readonly lecturaService:LecturaService
+  ){}
  async create(createMedidorDto: CreateMedidorDto) {
-    const medidor = await this.medidor.findOne({numeroSerie:createMedidorDto.numeroSerie, flag:FlagE.nuevo})
+    const medidor = await this.medidor.findOne({numeroMedidor:createMedidorDto.numeroMedidor, flag:FlagE.nuevo})
 
-    if(medidor && medidor.numeroSerie){
-      throw new ConflictException('El numero de serie ya existe')
+    if(medidor && medidor.numeroMedidor){
+      throw new ConflictException('El numero de medidor ya existe')
     }
     const codigo = await this.generarCodigo()
     createMedidorDto.codigo =codigo
@@ -24,8 +28,46 @@ export class MedidorService {
     return {status:HttpStatus.CREATED};
   }
 
-  findAll() {
-    return `This action returns all medidor`;
+  async findAll() {
+     const  medidores = await this.medidor.aggregate([
+      {
+        $match:{
+          flag:FlagE.nuevo
+        }
+      },
+      {
+      $lookup:{
+         from:'Cliente',
+         foreignField:'_id',
+         localField:'cliente',
+         as:'cliente'
+      }
+    
+    },
+
+      {
+        $unwind:{path:'$cliente', preserveNullAndEmptyArrays:false}
+      },
+
+      {
+          $project:{
+            codigoCliente:'$cliente.codigo',
+            ci:'$cliente.ci',
+               apellido:'$cliente.nombre',
+                estado:1,
+              nombre:'$cliente.nombre',
+              apellidoPaterno:'$cliente.apellidoPaterno',
+        
+              apellidoMaterno:'$cliente.apellidoMaterno',
+              numeroMedidor:1,
+              direccion:1,
+              codigo:1
+        }
+      }
+     ])
+
+     
+    return medidores;
   }
 
   findOne(id: number) {
@@ -42,15 +84,17 @@ export class MedidorService {
     private async generarCodigo(){
         let countDocuments = await this.medidor.countDocuments({flag:FlagE.nuevo}) 
         countDocuments  += 1
-        const codigo = 'M' + countDocuments.toLocaleString().padStart(6,'0')
-        return codigo
+        return countDocuments
     }
    
-    async buscarMedidor(codigo:string){
-      const data = await this.medidor.aggregate([
+    async buscarMedidor(numeroMedidor:string){
+    
+      
+      const dataM:DataMedidorI[]=[]
+      const dataMedidor:DataMedidorI[] = await this.medidor.aggregate([
           {
             $match:{
-              codigo:new RegExp(codigo, 'i'),
+              numeroMedidor:new RegExp(numeroMedidor,'i'),
               estado:EstadoMedidorE.activo
             }
           },
@@ -74,15 +118,48 @@ export class MedidorService {
               apellidoPaterno:'$cliente.apellidoPaterno',
               ci:'$cliente.ci',
               apellidoMaterno:'$cliente.apellidoMaterno',
-              numeroSerie:1,
+              numeroMedidor:1,
               direccion:1,
               codigo:1
 
             }
           }    
         ])
+        
+    
+        
+        if(dataMedidor.length > 0 ){
+          
+        for (const data of dataMedidor) {
+      
+          
+           const  lectura = await this.lecturaService.buscarLecturaAnterior(data._id)
+              const nuevaDada:DataMedidorI={
+                apellidoMaterno:data.apellidoMaterno,
+                direccion:data.direccion,
+                apellidoPaterno:data.apellidoPaterno,
+                ci:data.ci,
+                _id:data._id,
+                codigo:data.codigo,
+                codigoCliente:data.codigoCliente,
+                estado:data.estado,
+                lecturaAnterior: lectura ? lectura.lecturaActual : 0,
+                nombre:data.nombre, 
+                numeroMedidor:data.numeroMedidor
+              }   
+           dataM.push(nuevaDada)
+        }
+          
+        }
 
-      return data[0]
+    
+        
+      return dataM[0]
     }
   
+
+   async tarifaMedidor (medidor:Types.ObjectId){
+      const data = await this.medidor.findOne({flag:FlagE.nuevo, estado:EstadoMedidorE.activo, _id:new Types.ObjectId(medidor)})
+      return data
+    }
 }

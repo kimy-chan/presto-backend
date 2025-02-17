@@ -44,8 +44,15 @@ export class RangoService {
             }
         }
     ])
-    console.log(rangos);
+    
     
     return rangos
   }
+
+   async tarifaRangoMedidor (tarifa:Types.ObjectId):Promise<RangoI[]>{
+    const rangos:RangoI[] = await this.rango.find({tarifa:new Types.ObjectId(tarifa), flag:FlagE.nuevo})
+    return  rangos
+   }
+
+
 }

@@ -23,9 +23,9 @@ export class CreateClienteDto {
   @IsNotEmpty({ message: 'El apellido paterno es obligatorio' })
   apellidoPaterno: string;
 
-  @IsString({ message: 'La dirección debe ser una cadena de texto' })
+  /*@IsString({ message: 'La dirección debe ser una cadena de texto' })
   @IsNotEmpty({ message: 'La dirección es obligatoria' })
-  direccion: string;
+  direccion: string; */
 
 
   

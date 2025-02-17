@@ -6,13 +6,22 @@ import { FlagE } from "src/core-app/enums/flag"
 
 @Schema({collection:'Lectura'})
 export class Lectura {
+           @Prop()
+    codigo:number
+        @Prop()
+    mes:string
         @Prop({type:Number, default:0})
     lecturaActual:number
       @Prop({type:Number, default:0})
     lecturaAnterior:number
-
+    
+       @Prop({type:Number, default:0})
+     consumoTotal:number
           @Prop({type:Types.ObjectId, default:'Medidor'})
     medidor:Types.ObjectId
+
+             @Prop({type:Types.ObjectId, default:'Usuario'})
+    usuario:Types.ObjectId
 
      @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
             flag:string

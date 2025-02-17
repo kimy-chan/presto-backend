@@ -31,4 +31,9 @@ export class ClienteController {
   remove(@Param('id') id: string) {
     return this.clienteService.remove(+id);
   }
+
+  @Get('buscar/:codigo')
+  buscarClietePorCodigo(@Param('codig') codigo:string) {
+    return this.clienteService.buscarClietePorCodigo(codigo);
+  }
 }

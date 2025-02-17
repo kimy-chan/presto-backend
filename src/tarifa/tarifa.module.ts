@@ -20,5 +20,6 @@ import { RangoService } from './services/rango.service';
       ])],
   controllers: [TarifaController, RangoController],
   providers: [TarifaService, RangoService],
+  exports:[RangoService]
 })
 export class TarifaModule {}

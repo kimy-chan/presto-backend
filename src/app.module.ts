@@ -4,7 +4,6 @@ import { AutenticacionModule } from './autenticacion/autenticacion.module';
 import { GastoModule } from './gasto/gasto.module';
 import { TarifaModule } from './tarifa/tarifa.module';
 import { PagoModule } from './pago/pago.module';
-import { LecturaConsumoModule } from './lectura-consumo/lectura-consumo.module';
 import { UsuarioModule } from './usuario/usuario.module';
 import { CoreAppModule } from './core-app/core-app.module';
 import { MongooseModule } from '@nestjs/mongoose';
@@ -26,7 +25,6 @@ import { LecturaModule } from './lectura/lectura.module';
     
   PagoModule,
     
-  LecturaConsumoModule,
     
   UsuarioModule,
     
