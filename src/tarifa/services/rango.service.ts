@@ -39,7 +39,7 @@ export class RangoService {
             $project:{
                 rango1:1,
                 rango2:1,
-                precio:1,
+                costo:1,
                 tarifa:"$tarifa.nombre"
             }
         }

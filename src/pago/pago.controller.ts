@@ -1,7 +1,8 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
 import { PagoService } from './pago.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
+import { BuscarPagoDto } from './dto/buscarPago.dto';
 
 @Controller('pago')
 export class PagoController {
@@ -10,6 +11,11 @@ export class PagoController {
   @Post()
   create(@Body() createPagoDto: CreatePagoDto) {
     return this.pagoService.create(createPagoDto);
+  }
+
+    @Get('buscar')
+  BuscarPago(@Query () buscarPagoDto:BuscarPagoDto) {
+    return this.pagoService.buscarPago(buscarPagoDto);
   }
 
   @Get()

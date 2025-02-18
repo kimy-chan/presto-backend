@@ -11,5 +11,7 @@ export interface LecturaI{
             codigo:number
 
             consumoTotal:NumberExpression
+
+            mes:string
     
 }

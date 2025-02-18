@@ -27,7 +27,10 @@ export class LecturaService {
         consumoTotal: consumo,
         lecturaActual:createLecturaDto.lecturaActual,
         lecturaAnterior:createLecturaDto.lecturaAnterior,
-        medidor:new Types.ObjectId(createLecturaDto.medidor)
+        medidor:new Types.ObjectId(createLecturaDto.medidor),
+        mes:createLecturaDto.mes
+      
+      
   
       }
      
@@ -44,7 +47,7 @@ export class LecturaService {
 
           }
             await this.pagoService.crearPago(data)
-                return {status:HttpStatus.CREATED};
+                return {status:HttpStatus.CREATED, lectura:lectura._id};
             
         }
         throw new BadRequestException('Hubo un error inesperado')
@@ -64,6 +67,80 @@ export class LecturaService {
     return codigo
   } 
 
+   async reciboLectura(id:Types.ObjectId) {
+      const recibo = await this.lectura.aggregate([
+          {
+            $match:{
+              _id:new Types.ObjectId(id)
+            }
+          },
+          {
+            $lookup:{
+              from:'Medidor',
+               foreignField:'_id',
+                localField:'medidor',
+                as:'medidor'
+            }
+          },
+          {
+            $unwind:{path:'$medidor', preserveNullAndEmptyArrays:false}
+          },
+            {
+            $lookup:{
+              from:'Tarifa',
+               foreignField:'_id',
+                localField:'medidor.tarifa',
+                as:'tarifa'
+            }
+          },
+          {
+            $unwind:{path:'$tarifa', preserveNullAndEmptyArrays:false}
+          },
+           {  $lookup:{
+              from:'Cliente',
+               foreignField:'_id',
+                localField:'medidor.cliente',
+                as:'cliente'
+            }
+          },
+          {
+            $unwind:{path:'$cliente', preserveNullAndEmptyArrays:false}
+          },
+
+             {  $lookup:{
+              from:'Pago',
+               foreignField:'lectura',
+                localField:'_id',
+                as:'pago'
+            }
+          },
+          {
+            $unwind:{path:'$pago', preserveNullAndEmptyArrays:false}
+          },
+          {
+            $project:{
+              codigoCliente:'$cliente.codigo',
+              numeroMedidor:'$medidor.numeroMedidor',
+              nombre:'$cliente.nombre',
+               apellidoPaterno:'$cliente.apellidoPaterno',
+               apellidoMaterno:'$cliente.apellidoMaterno',
+                direccion:'$medidor.direccion',
+              categoria:'$tarifa.nombre',
+                fecha:1,
+                lecturaActual:1,
+                  lecturaAnterior:1,
+                  consumoTotal:1,
+                  costoApagar:'$pago.costoApagar'
+
+            }
+          }
+
+
+
+        ])
+        return {status:HttpStatus.OK, data:recibo[0]}
+          
+    } 
   findAll() {
     return `This action returns all lectura`;
   }

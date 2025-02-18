@@ -8,6 +8,7 @@ import { RangoService } from 'src/tarifa/services/rango.service';
 import { InjectModel } from '@nestjs/mongoose';
 import { Pago } from './schemas/pago.schema';
 import { PagoI } from './interface/pago';
+import { BuscarPagoDto } from './dto/buscarPago.dto';
 
 @Injectable()
 export class PagoService {
@@ -52,7 +53,11 @@ private  async calcularTarifa (lectura:DataLecturaI){
 
 }
 
+buscarPago(buscarPagoDto:BuscarPagoDto){
+  console.log(buscarPagoDto);
+  
 
+}
 
   findAll() {
     return `This action returns all pago`;

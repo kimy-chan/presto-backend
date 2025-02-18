@@ -1,4 +1,5 @@
-import { IsMongoId, IsNotEmpty, IsNumber } from "class-validator"
+import { Transform } from "class-transformer"
+import { IsMongoId, IsNotEmpty, IsNumber, IsString } from "class-validator"
 import { Types } from "mongoose"
 
 export class CreateLecturaDto {
@@ -12,5 +13,10 @@ export class CreateLecturaDto {
         @IsMongoId()
         @IsNotEmpty()
         medidor:Types.ObjectId
+
+         @IsString()
+        @IsNotEmpty()
+        @Transform(({value}:{value:string})=> value.toUpperCase())
+        mes:string
        
 }
