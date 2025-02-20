@@ -1,21 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { PagoService } from './pago.service';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { BuscarPagoDto } from './dto/buscarPago.dto';
+import { RealizarPago } from './dto/realizarPago.dto';
 
 @Controller('pago')
 export class PagoController {
   constructor(private readonly pagoService: PagoService) {}
 
-  @Post()
-  create(@Body() createPagoDto: CreatePagoDto) {
-    return this.pagoService.create(createPagoDto);
-  }
-
-    @Get('buscar')
-  BuscarPago(@Query () buscarPagoDto:BuscarPagoDto) {
-    return this.pagoService.buscarPago(buscarPagoDto);
+  @Post('realizar')
+  realizarPago(@Body() realizarPago: RealizarPago) {
+    return this.pagoService.realizarPago(realizarPago);
   }
 
   @Get()

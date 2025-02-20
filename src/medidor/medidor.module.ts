@@ -7,16 +7,17 @@ import { LecturaService } from 'src/lectura/lectura.service';
 import { LecturaModule } from 'src/lectura/lectura.module';
 
 @Module({
-    imports:[MongooseModule.forFeature([
+  imports: [
+    MongooseModule.forFeature([
       {
-        name:Medidor.name, schema:medidorSchema
-      }
+        name: Medidor.name,
+        schema: medidorSchema,
+      },
     ]),
-    forwardRef(()=>LecturaModule)
-  
+    forwardRef(() => LecturaModule),
   ],
   controllers: [MedidorController],
   providers: [MedidorService],
-  exports:[MedidorService]
+  exports: [MedidorService],
 })
 export class MedidorModule {}

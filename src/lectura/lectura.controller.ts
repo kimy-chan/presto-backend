@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { LecturaService } from './lectura.service';
 import { CreateLecturaDto } from './dto/create-lectura.dto';
 import { UpdateLecturaDto } from './dto/update-lectura.dto';
@@ -34,10 +42,12 @@ export class LecturaController {
     return this.lecturaService.remove(+id);
   }
 
-
   @Get('recibo/:id')
-  reciboLectura(@Param('id', ValidateIdPipe) id:Types.ObjectId){
-    return this.lecturaService.reciboLectura(id)
-
+  reciboLectura(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.lecturaService.reciboLectura(id);
+  }
+  @Get('medidor/:medidor')
+  lecturaMedidor(@Param('medidor', ValidateIdPipe) medidor: Types.ObjectId) {
+    return this.lecturaService.lecturaMedidor(medidor);
   }
 }

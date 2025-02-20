@@ -1,17 +1,19 @@
-import { NumberExpression, Types } from "mongoose"
+import { Types } from 'mongoose';
 
-export interface LecturaI{
-     
-            lecturaActual:number
-          
-            lecturaAnterior:number
-         
-            medidor:Types.ObjectId
-       
-            codigo:number
+export interface LecturaI {
+  lecturaActual: number;
 
-            consumoTotal:NumberExpression
+  lecturaAnterior: number;
 
-            mes:string
-    
+  medidor: Types.ObjectId;
+
+  codigo: number;
+
+  consumoTotal: number;
+
+  mes: string;
+
+  numeroLectura: number;
+
+  costoApagar: number;
 }

@@ -1,4 +1,11 @@
-import { Injectable, Type } from '@nestjs/common';
+import {
+  BadGatewayException,
+  BadRequestException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  Type,
+} from '@nestjs/common';
 import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { Model, Types } from 'mongoose';
@@ -9,55 +16,38 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Pago } from './schemas/pago.schema';
 import { PagoI } from './interface/pago';
 import { BuscarPagoDto } from './dto/buscarPago.dto';
+import { FlagE } from 'src/core-app/enums/flag';
+import { RealizarPago } from './dto/realizarPago.dto';
+import { LecturaService } from 'src/lectura/lectura.service';
 
 @Injectable()
 export class PagoService {
   constructor(
-    @InjectModel(Pago.name) private readonly pago:Model<Pago>,
-    private readonly rangoService:RangoService
-  ){}
-  create(createPagoDto: CreatePagoDto) {
-    return 'This action adds a new pago';
+    @InjectModel(Pago.name) private readonly pago: Model<Pago>,
+    private readonly lecturaService: LecturaService,
+  ) {}
 
-  }
-
-
-async crearPago(lectura: DataLecturaI) {
-    const date = new Date()
-    const constoTotal = await this.calcularTarifa(lectura)
-    
-    const data:PagoI ={
-      aqo:date.getFullYear().toString(),
-      costoApagar:constoTotal,
-      lectura:lectura._id,
+  async realizarPago(realizarPago: RealizarPago) {
+    console.log(realizarPago.lectura);
+    const lectura = await this.lecturaService.lecturaFindOne(
+      realizarPago.lectura,
+    );
+    if (!lectura) {
+      throw new NotFoundException('Lectura no encontrada');
     }
-    await this.pago.create(data)
-    return      
-
-}
-
-
-
-// sacamos el costo por la capacidad de agua de cada  taria
-private  async calcularTarifa (lectura:DataLecturaI){
-      const rangos = await this.rangoService.tarifaRangoMedidor(lectura.tarifa);
-      let consumo = lectura.consumoTotal // lectura actual
-      let costoTotal = 0
-      for (const rango of rangos) {
-        let capacidadAgua = Math.min(consumo, rango.rango2 - rango.rango1); // capacidad de agua que del rango      
-        const costo = capacidadAgua * rango.costo
-          consumo -= capacidadAgua
-          costoTotal += costo     
-      }
-    return costoTotal
-
-}
-
-buscarPago(buscarPagoDto:BuscarPagoDto){
-  console.log(buscarPagoDto);
-  
-
-}
+    if (lectura.costoApagar != realizarPago.costoPagado) {
+      return new BadRequestException('Cancele el monto exacto');
+    }
+    realizarPago.lectura = new Types.ObjectId(realizarPago.lectura);
+    const pago = await this.pago.create(realizarPago);
+    const lecturaPagada = await this.lecturaService.cambiarEstadoLectura(
+      realizarPago.lectura,
+    );
+    if (pago && lecturaPagada.acknowledged == true) {
+      return { status: HttpStatus.OK, medidor: lectura.medidor };
+    }
+    throw new BadRequestException('Ocurrio un error');
+  }
 
   findAll() {
     return `This action returns all pago`;

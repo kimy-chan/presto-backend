@@ -1,37 +1,34 @@
-import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { FlagE } from "src/core-app/enums/flag";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { FlagE } from 'src/core-app/enums/flag';
 
-
-@Schema({collection:'Cliente'})
+@Schema({ collection: 'Cliente' })
 export class Cliente {
+  @Prop()
+  codigo: string;
 
-    @Prop()
-    codigo:number
+  @Prop()
+  ci: string;
 
-    @Prop()
-    ci:string
+  @Prop()
+  nombre: string;
 
-    @Prop()
-    nombre:string
+  @Prop()
+  celular: string;
 
-    @Prop()
-    celular:string
+  @Prop()
+  apellidoMaterno: string;
 
-    @Prop()
-    apellidoMaterno:string
+  @Prop()
+  apellidoPaterno: string;
 
-    @Prop()
-    apellidoPaterno:string
+  //@Prop()
+  // direccion:string
 
-    //@Prop()
-   // direccion:string
-    
-    @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
-    flag:string
+  @Prop({ type: String, enum: FlagE, default: FlagE.nuevo })
+  flag: string;
 
-    @Prop({type:Date, default:Date.now() })
-    fecha:Date
-
+  @Prop({ type: Date, default: Date.now() })
+  fecha: Date;
 }
 
-export const clienteSchema = SchemaFactory.createForClass(Cliente)
+export const clienteSchema = SchemaFactory.createForClass(Cliente);

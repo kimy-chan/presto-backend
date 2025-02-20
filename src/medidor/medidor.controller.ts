@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { MedidorService } from './medidor.service';
 import { CreateMedidorDto } from './dto/create-medidor.dto';
 import { UpdateMedidorDto } from './dto/update-medidor.dto';
+import { Types } from 'mongoose';
+import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 
 @Controller('medidor')
 export class MedidorController {
@@ -33,7 +43,12 @@ export class MedidorController {
   }
 
   @Get('buscar/:numeroMedidor')
-  buscarMedidor (@Param('numeroMedidor') numeroMedidor:string ){
-    return this.medidorService.buscarMedidor(numeroMedidor)
+  buscarMedidor(@Param('numeroMedidor') numeroMedidor: string) {
+    return this.medidorService.buscarMedidor(numeroMedidor);
+  }
+
+  @Get('cliente/:cliente')
+  medidorCliente(@Param('cliente', ValidateIdPipe) cliente: Types.ObjectId) {
+    return this.medidorService.medidorCliente(cliente);
   }
 }

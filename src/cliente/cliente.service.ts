@@ -8,30 +8,35 @@ import { FlagE } from 'src/core-app/enums/flag';
 
 @Injectable()
 export class ClienteService {
-  constructor( @InjectModel(Cliente.name) private readonly cliente:Model<Cliente>){}
+  constructor(
+    @InjectModel(Cliente.name) private readonly cliente: Model<Cliente>,
+  ) {}
   async create(createClienteDto: CreateClienteDto) {
-    const cliente = await this.cliente.findOne({ci:createClienteDto.ci, flag:FlagE.nuevo})
+    const cliente = await this.cliente.findOne({
+      ci: createClienteDto.ci,
+      flag: FlagE.nuevo,
+    });
 
-    if(cliente && cliente.ci){
-      throw new ConflictException('El ci ya se encuentra registrado')
+    if (cliente && cliente.ci) {
+      throw new ConflictException('El ci ya se encuentra registrado');
     }
-    const codigo = await this.generarCodigo()
-    const clienteRegistrado= await this.cliente.create({
-      apellidoMaterno:createClienteDto.apellidoMaterno,
-      apellidoPaterno:createClienteDto.apellidoPaterno,
-      celular:createClienteDto.celular,
-       codigo:codigo,
-       //direccion:createClienteDto.direccion,
-       ci:createClienteDto.ci,
-       nombre:createClienteDto.nombre
-    })
+    const codigo = await this.generarCodigo();
+    const clienteRegistrado = await this.cliente.create({
+      apellidoMaterno: createClienteDto.apellidoMaterno,
+      apellidoPaterno: createClienteDto.apellidoPaterno,
+      celular: createClienteDto.celular,
+      codigo: codigo,
+      //direccion:createClienteDto.direccion,
+      ci: createClienteDto.ci,
+      nombre: createClienteDto.nombre,
+    });
 
-    return {status:HttpStatus.CREATED, cliente: clienteRegistrado}
+    return { status: HttpStatus.CREATED, cliente: clienteRegistrado };
   }
 
   async findAll() {
-    const clientes = await this.cliente.find({flag:FlagE.nuevo})
-    return  clientes;
+    const clientes = await this.cliente.find({ flag: FlagE.nuevo });
+    return clientes;
   }
 
   findOne(id: number) {
@@ -39,7 +44,6 @@ export class ClienteService {
   }
 
   update(id: number, updateClienteDto: UpdateClienteDto) {
-    
     return `This action updates a #${id} cliente`;
   }
 
@@ -47,15 +51,19 @@ export class ClienteService {
     return `This action removes a #${id} cliente`;
   }
 
-  private async generarCodigo(){
-      let countDocuments = await this.cliente.countDocuments({flag:FlagE.nuevo}) 
-      countDocuments  += 1
-      return countDocuments
+  private async generarCodigo() {
+    let countDocuments = await this.cliente.countDocuments({
+      flag: FlagE.nuevo,
+    });
+    countDocuments += 1;
+    return countDocuments;
   }
 
- async  buscarClietePorCodigo(codigo:string){
-    const cliente = this.cliente.findOne( {flag:FlagE.nuevo, codigo:new RegExp(codigo,'i')})
-    return cliente
+  async buscarClietePorCodigo(codigo: string) {
+    const cliente = this.cliente.findOne({
+      flag: FlagE.nuevo,
+      codigo: new RegExp(codigo, 'i'),
+    });
+    return cliente;
   }
 }
-
