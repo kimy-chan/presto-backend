@@ -14,6 +14,7 @@ import { FlagE } from 'src/core-app/enums/flag';
 import { EstadoMedidorE } from './enums/estados';
 import { LecturaService } from 'src/lectura/lectura.service';
 import { DataMedidorI } from './interface/dataMedidor';
+import { DataMedidorCliente } from './interface/dataMedidorCliente';
 @Injectable()
 export class MedidorService {
   constructor(
@@ -102,7 +103,7 @@ export class MedidorService {
     const dataMedidor: DataMedidorI[] = await this.medidor.aggregate([
       {
         $match: {
-          numeroMedidor: new RegExp(numeroMedidor, 'i'),
+          numeroMedidor: numeroMedidor,
           estado: EstadoMedidorE.activo,
         },
       },
@@ -172,6 +173,7 @@ export class MedidorService {
         $match: {
           flag: FlagE.nuevo,
           estado: EstadoMedidorE.activo,
+          cliente: new Types.ObjectId(cliente),
         },
       },
       {
@@ -195,5 +197,40 @@ export class MedidorService {
     ]);
 
     return medidores;
+  }
+
+  async medidorCienteData(medidor: Types.ObjectId) {
+    const dataMedidorCliente: DataMedidorCliente[] =
+      await this.medidor.aggregate([
+        {
+          $match: {
+            flag: FlagE.nuevo,
+            _id: new Types.ObjectId(medidor),
+            estado: EstadoMedidorE.activo,
+          },
+        },
+        {
+          $lookup: {
+            from: 'Cliente',
+            foreignField: '_id',
+            localField: 'cliente',
+            as: 'cliente',
+          },
+        },
+        {
+          $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+        },
+        {
+          $project: {
+            numeroMedidor: 1,
+            ci: '$cliente.ci',
+            nombre: '$cliente.nombre',
+            apellidoPaterno: '$cliente.apellidoPaterno',
+            apellidoMaterno: '$cliente.apellidoMaterno',
+            direccion: 1,
+          },
+        },
+      ]);
+    return dataMedidorCliente[0];
   }
 }

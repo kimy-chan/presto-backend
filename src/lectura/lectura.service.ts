@@ -41,8 +41,6 @@ export class LecturaService {
     );
     if (medidor) {
       const costoApagar = await this.calcularTarifa(consumo, medidor.tarifa);
-      console.log(costoApagar);
-
       const dataLectura: LecturaI = {
         codigo: await this.codigoLectura(),
 

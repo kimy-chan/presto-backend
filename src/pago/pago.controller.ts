@@ -13,6 +13,8 @@ import { CreatePagoDto } from './dto/create-pago.dto';
 import { UpdatePagoDto } from './dto/update-pago.dto';
 import { BuscarPagoDto } from './dto/buscarPago.dto';
 import { RealizarPago } from './dto/realizarPago.dto';
+import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
+import { Types } from 'mongoose';
 
 @Controller('pago')
 export class PagoController {
@@ -23,9 +25,9 @@ export class PagoController {
     return this.pagoService.realizarPago(realizarPago);
   }
 
-  @Get()
-  findAll() {
-    return this.pagoService.findAll();
+  @Get('cliente/:medidor')
+  pagosCliente(@Param('medidor', ValidateIdPipe) medidor: Types.ObjectId) {
+    return this.pagoService.pagosCliente(medidor);
   }
 
   @Get(':id')
