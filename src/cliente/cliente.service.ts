@@ -5,6 +5,8 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Cliente } from './schema/cliente.schema';
 import { Model } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
+import { BuscadorClienteDto } from './dto/BuscadorCliente.dto';
+import { BuscadorClienteI } from './interface/BuscadorCliente';
 
 @Injectable()
 export class ClienteService {
@@ -34,9 +36,49 @@ export class ClienteService {
     return { status: HttpStatus.CREATED, cliente: clienteRegistrado };
   }
 
-  async findAll() {
-    const clientes = await this.cliente.find({ flag: FlagE.nuevo });
-    return clientes;
+  async listarClientes(buscadorClienteDto: BuscadorClienteDto) {
+    const filter: BuscadorClienteI = {};
+    buscadorClienteDto.codigo
+      ? (filter.codigo = buscadorClienteDto.codigo)
+      : filter;
+    buscadorClienteDto.ci
+      ? (filter.ci = new RegExp(buscadorClienteDto.ci, 'i'))
+      : filter;
+    buscadorClienteDto.nombre
+      ? (filter.nombre = new RegExp(buscadorClienteDto.nombre, 'i'))
+      : filter;
+    buscadorClienteDto.apellidoPaterno
+      ? (filter.apellidoPaterno = new RegExp(
+          buscadorClienteDto.apellidoPaterno,
+          'i',
+        ))
+      : filter;
+    buscadorClienteDto.apellidoMaterno
+      ? (filter.apellidoMaterno = new RegExp(
+          buscadorClienteDto.apellidoMaterno,
+          'i',
+        ))
+      : filter;
+    const countDocuments = await this.cliente.countDocuments({
+      flag: FlagE.nuevo,
+    });
+    const paginas = Math.ceil(countDocuments / buscadorClienteDto.limite);
+
+    const clientes = await this.cliente
+      .find({
+        flag: FlagE.nuevo,
+        ...filter,
+      })
+      .skip(
+        (Number(buscadorClienteDto.pagina) - 1) *
+          Number(buscadorClienteDto.limite),
+      )
+      .limit(buscadorClienteDto.limite)
+
+      .sort({ codigo: -1 });
+    console.log(clientes);
+
+    return { status: HttpStatus.OK, paginas: paginas, data: clientes };
   }
 
   findOne(id: number) {

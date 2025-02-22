@@ -1,5 +1,6 @@
 import {
   BadRequestException,
+  ConflictException,
   forwardRef,
   HttpStatus,
   Inject,
@@ -31,6 +32,18 @@ export class LecturaService {
     private readonly rangoService: RangoService,
   ) {}
   async create(createLecturaDto: CreateLecturaDto) {
+    const date = new Date();
+    const gestion = date.getFullYear();
+    const lectura = await this.lectura.findOne({
+      flag: FlagE.nuevo,
+      medidor: new Types.ObjectId(createLecturaDto.medidor),
+      mes: createLecturaDto.mes,
+      gestion: gestion,
+    });
+
+    if (lectura) {
+      throw new ConflictException('La lectura ya fue registrada');
+    }
     const consumo =
       createLecturaDto.lecturaActual - createLecturaDto.lecturaAnterior;
     if (consumo < 0) {
@@ -53,6 +66,7 @@ export class LecturaService {
         medidor: new Types.ObjectId(createLecturaDto.medidor),
         mes: createLecturaDto.mes,
         costoApagar: costoApagar,
+        gestion: String(gestion),
       };
       const lectura = await this.lectura.create(dataLectura);
       return { status: HttpStatus.CREATED, lectura: lectura._id };

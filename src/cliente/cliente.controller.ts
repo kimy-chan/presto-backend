@@ -1,7 +1,17 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Query,
+} from '@nestjs/common';
 import { ClienteService } from './cliente.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
+import { BuscadorClienteDto } from './dto/BuscadorCliente.dto';
 
 @Controller('cliente')
 export class ClienteController {
@@ -13,8 +23,8 @@ export class ClienteController {
   }
 
   @Get()
-  findAll() {
-    return this.clienteService.findAll();
+  listarClientes(@Query() buscadorClienteDto: BuscadorClienteDto) {
+    return this.clienteService.listarClientes(buscadorClienteDto);
   }
 
   @Get(':id')
@@ -33,7 +43,7 @@ export class ClienteController {
   }
 
   @Get('buscar/:codigo')
-  buscarClietePorCodigo(@Param('codig') codigo:string) {
+  buscarClietePorCodigo(@Param('codig') codigo: string) {
     return this.clienteService.buscarClietePorCodigo(codigo);
   }
 }

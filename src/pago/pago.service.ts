@@ -31,7 +31,6 @@ export class PagoService {
   ) {}
 
   async realizarPago(realizarPago: RealizarPago) {
-    console.log(realizarPago.lectura);
     const lectura = await this.lecturaService.lecturaFindOne(
       realizarPago.lectura,
     );
@@ -79,10 +78,11 @@ export class PagoService {
         },
         {
           $project: {
-            aqo: '$lectura.aqo',
-            mesa: '$lectura.mes',
+            gestion: '$lectura.gestion',
+            mes: '$lectura.mes',
             lecturaActual: '$lectura.lecturaActual',
-            lecturaAnteriror: '$lectura.lecturaAnterior',
+            lecturaAnterior: '$lectura.lecturaAnterior',
+            consumoTotal: '$lectura.consumoTotal',
             costoPagado: 1,
             observaciones: 1,
           },

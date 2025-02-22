@@ -25,6 +25,8 @@ export class Lectura {
 
   @Prop({ type: Number, default: 0 })
   costoApagar: number;
+  @Prop()
+  gestion: string;
 
   @Prop({
     type: String,

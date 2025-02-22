@@ -13,6 +13,8 @@ export interface LecturaI {
 
   mes: string;
 
+  gestion: string;
+
   numeroLectura: number;
 
   costoApagar: number;

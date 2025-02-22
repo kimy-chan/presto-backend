@@ -14,7 +14,7 @@ export class Pago {
   @Prop()
   observaciones: string;
   @Prop()
-  aqo: string;
+  gestion: string;
 
   @Prop({ type: String, enum: EstadoE })
   estado: string;
