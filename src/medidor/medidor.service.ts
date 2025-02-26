@@ -15,6 +15,8 @@ import { EstadoMedidorE } from './enums/estados';
 import { LecturaService } from 'src/lectura/lectura.service';
 import { DataMedidorI } from './interface/dataMedidor';
 import { DataMedidorCliente } from './interface/dataMedidorCliente';
+import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
+import { BuscadorMedidorClienteI } from './interface/buscadorMedidorCliente';
 @Injectable()
 export class MedidorService {
   constructor(
@@ -39,11 +41,48 @@ export class MedidorService {
     return { status: HttpStatus.CREATED };
   }
 
-  async findAll() {
+  private filtradorMedidorCliente(
+    buscadorMedidorClienteDto: BuscadorMedidorClienteDto,
+  ) {
+    const filter: BuscadorMedidorClienteI = {};
+    buscadorMedidorClienteDto.ci
+      ? (filter.ci = new RegExp(buscadorMedidorClienteDto.ci, 'i'))
+      : filter;
+
+    buscadorMedidorClienteDto.nombre
+      ? (filter.nombre = new RegExp(buscadorMedidorClienteDto.nombre, 'i'))
+      : filter;
+
+    buscadorMedidorClienteDto.apellidoMaterno
+      ? (filter.apellidoMaterno = new RegExp(
+          buscadorMedidorClienteDto.apellidoMaterno,
+          'i',
+        ))
+      : filter;
+
+    buscadorMedidorClienteDto.apellidoPaterno
+      ? (filter.apellidoPaterno = new RegExp(
+          buscadorMedidorClienteDto.apellidoPaterno,
+          'i',
+        ))
+      : filter;
+    buscadorMedidorClienteDto.numeroMedidor
+      ? (filter.numeroMedidor = buscadorMedidorClienteDto.numeroMedidor)
+      : filter;
+    return filter;
+  }
+  async listarMedidorCliente(
+    buscadorMedidorClienteDto: BuscadorMedidorClienteDto,
+  ) {
+    const { numeroMedidor, apellidoMaterno, apellidoPaterno, ci, nombre } =
+      this.filtradorMedidorCliente(buscadorMedidorClienteDto);
+    console.log(apellidoPaterno);
+
     const medidores = await this.medidor.aggregate([
       {
         $match: {
           flag: FlagE.nuevo,
+          ...(numeroMedidor ? { numeroMedidor: numeroMedidor } : {}),
         },
       },
       {
@@ -58,6 +97,44 @@ export class MedidorService {
       {
         $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
       },
+
+      ...(nombre
+        ? [
+            {
+              $match: {
+                'cliente.nombre': nombre,
+              },
+            },
+          ]
+        : []),
+
+      ...(apellidoPaterno
+        ? [
+            {
+              $match: {
+                'cliente.apellidoPaterno': apellidoPaterno,
+              },
+            },
+          ]
+        : []),
+      ...(apellidoMaterno
+        ? [
+            {
+              $match: {
+                'cliente.apellidoMaterno': apellidoMaterno,
+              },
+            },
+          ]
+        : []),
+      ...(ci
+        ? [
+            {
+              $match: {
+                'cliente.ci': ci,
+              },
+            },
+          ]
+        : []),
 
       {
         $project: {
@@ -74,9 +151,34 @@ export class MedidorService {
           codigo: 1,
         },
       },
+      {
+        $sort: { fecha: -1 },
+      },
+      {
+        $facet: {
+          data: [
+            {
+              $limit: buscadorMedidorClienteDto.limite,
+            },
+            {
+              $skip:
+                (buscadorMedidorClienteDto.pagina - 1) *
+                buscadorMedidorClienteDto.limite,
+            },
+          ],
+          countDocuments: [
+            {
+              $count: 'total',
+            },
+          ],
+        },
+      },
     ]);
-
-    return medidores;
+    const cantidadItems = medidores[0].countDocuments[0]
+      ? medidores[0].countDocuments[0].total
+      : 1;
+    const paginas = Math.ceil(cantidadItems / buscadorMedidorClienteDto.limite);
+    return { status: HttpStatus.OK, data: medidores[0].data, paginas: paginas };
   }
 
   findOne(id: number) {

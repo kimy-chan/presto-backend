@@ -6,12 +6,14 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { MedidorService } from './medidor.service';
 import { CreateMedidorDto } from './dto/create-medidor.dto';
 import { UpdateMedidorDto } from './dto/update-medidor.dto';
 import { Types } from 'mongoose';
 import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
+import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 
 @Controller('medidor')
 export class MedidorController {
@@ -23,8 +25,10 @@ export class MedidorController {
   }
 
   @Get()
-  findAll() {
-    return this.medidorService.findAll();
+  listarMedidorCliente(
+    @Query() buscadorMedidorClienteDto: BuscadorMedidorClienteDto,
+  ) {
+    return this.medidorService.listarMedidorCliente(buscadorMedidorClienteDto);
   }
 
   @Get(':id')

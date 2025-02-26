@@ -15,6 +15,7 @@ import { BuscarPagoDto } from './dto/buscarPago.dto';
 import { RealizarPago } from './dto/realizarPago.dto';
 import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 import { Types } from 'mongoose';
+import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
 
 @Controller('pago')
 export class PagoController {
@@ -30,18 +31,8 @@ export class PagoController {
     return this.pagoService.pagosCliente(medidor);
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.pagoService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() updatePagoDto: UpdatePagoDto) {
-    return this.pagoService.update(+id, updatePagoDto);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.pagoService.remove(+id);
+  @Get('listar')
+  listarPagos(@Query() buscadorClienteDto: BuscadorClienteDto) {
+    return this.pagoService.listarPagos(buscadorClienteDto);
   }
 }

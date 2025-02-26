@@ -46,6 +46,9 @@ export class Lectura {
 
   @Prop({ type: Date, default: Date.now() })
   fecha: Date;
+
+  @Prop({ type: Date })
+  fechaCorte: Date;
 }
 
 export const lecturaSchema = SchemaFactory.createForClass(Lectura);

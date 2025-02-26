@@ -5,12 +5,13 @@ import {
   HttpStatus,
   Inject,
   Injectable,
+  Param,
 } from '@nestjs/common';
 import { CreateLecturaDto } from './dto/create-lectura.dto';
 import { UpdateLecturaDto } from './dto/update-lectura.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Lectura } from './schemas/lectura.schema';
-import { Model, Types } from 'mongoose';
+import { Aggregate, Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { LecturaI } from './interface/lectura';
 import { PagoService } from 'src/pago/pago.service';
@@ -21,7 +22,9 @@ import { types } from 'util';
 import { EstadoMedidorE } from 'src/medidor/enums/estados';
 import { EstadoLecturaE } from './enums/estadoLectura';
 import { EstadoE } from 'src/pago/enum/estadoE';
-
+import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
+import { BuscadorLecturaDto } from './dto/BuscadorLectura.dto';
+import { BuscadorLecturaI } from './interface/buscadorLectura';
 @Injectable()
 export class LecturaService {
   constructor(
@@ -31,9 +34,26 @@ export class LecturaService {
     private readonly medidorService: MedidorService,
     private readonly rangoService: RangoService,
   ) {}
+
+  private filterLectura(buscadorLecturaDto: BuscadorLecturaDto) {
+    const filter: BuscadorLecturaI = {};
+    buscadorLecturaDto.numeroMedidor
+      ? (filter.numeroMedidor = buscadorLecturaDto.numeroMedidor)
+      : filter;
+    buscadorLecturaDto.mes ? (filter.mes = buscadorLecturaDto.mes) : filter;
+    buscadorLecturaDto.fechaInicio && buscadorLecturaDto.fechaFin
+      ? (filter.fecha = {
+          $gte: new Date(buscadorLecturaDto.fechaInicio),
+          $lte: new Date(buscadorLecturaDto.fechaFin),
+        })
+      : filter;
+
+    return filter;
+  }
   async create(createLecturaDto: CreateLecturaDto) {
     const date = new Date();
     const gestion = date.getFullYear();
+
     const lectura = await this.lectura.findOne({
       flag: FlagE.nuevo,
       medidor: new Types.ObjectId(createLecturaDto.medidor),
@@ -47,7 +67,7 @@ export class LecturaService {
     const consumo =
       createLecturaDto.lecturaActual - createLecturaDto.lecturaAnterior;
     if (consumo < 0) {
-      throw new BadRequestException('Ingre las lecturas correctas');
+      throw new BadRequestException('Ingrece las lecturas correctas');
     }
     const medidor = await this.medidorService.buscarMedidorActivo(
       createLecturaDto.medidor,
@@ -149,7 +169,13 @@ export class LecturaService {
           apellidoMaterno: '$cliente.apellidoMaterno',
           direccion: '$medidor.direccion',
           categoria: '$tarifa.nombre',
-          fecha: 1,
+          gestion: 1,
+          fecha: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$fecha',
+            },
+          },
           lecturaActual: 1,
           lecturaAnterior: 1,
           consumoTotal: 1,
@@ -159,8 +185,101 @@ export class LecturaService {
     ]);
     return { status: HttpStatus.OK, data: recibo[0] };
   }
-  findAll() {
-    return `This action returns all lectura`;
+  async listarLecturas(buscadorLecturaDto: BuscadorLecturaDto) {
+    const { numeroMedidor, ...filter } = this.filterLectura(buscadorLecturaDto);
+
+    try {
+      const lectura = await this.lectura.aggregate([
+        {
+          $match: {
+            flag: FlagE.nuevo,
+            ...filter,
+          },
+        },
+        {
+          $lookup: {
+            from: 'Medidor',
+            foreignField: '_id',
+            localField: 'medidor',
+            as: 'medidor',
+          },
+        },
+
+        {
+          $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
+        },
+
+        ...(numeroMedidor
+          ? [{ $match: { 'medidor.numeroMedidor': numeroMedidor } }]
+          : []),
+
+        {
+          $lookup: {
+            from: 'Cliente',
+            foreignField: '_id',
+            localField: 'medidor.cliente',
+            as: 'cliente',
+          },
+        },
+
+        {
+          $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+        },
+
+        {
+          $project: {
+            _id: 1,
+            ci: '$cliente.ci',
+            nombre: '$cliente.nombre',
+            apellidoPaterno: '$cliente.apellidoPaterno',
+            apellidoMaterno: '$cliente.apellidoMaterno',
+            numeroMedidor: '$medidor.numeroMedidor',
+            estadoMedidor: '$medidor.estado',
+            lecturaActual: 1,
+            lecturaAnterior: 1,
+            consumoTotal: 1,
+            costoApagar: 1,
+            gestion: 1,
+            mes: 1,
+            estado: 1,
+            fecha: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$fecha',
+              },
+            },
+          },
+        },
+        {
+          $sort: { fecha: -1 },
+        },
+        {
+          $facet: {
+            data: [
+              {
+                $limit: buscadorLecturaDto.limite,
+              },
+              {
+                $skip:
+                  (buscadorLecturaDto.pagina - 1) * buscadorLecturaDto.limite,
+              },
+            ],
+            countDocuments: [
+              {
+                $count: 'total',
+              },
+            ],
+          },
+        },
+      ]);
+      const cantidadItems = lectura[0].countDocuments[0]
+        ? lectura[0].countDocuments[0].total
+        : 1;
+      const paginas = Math.ceil(cantidadItems / buscadorLecturaDto.limite);
+      return { status: HttpStatus.OK, paginas: paginas, data: lectura[0].data };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   findOne(id: number) {

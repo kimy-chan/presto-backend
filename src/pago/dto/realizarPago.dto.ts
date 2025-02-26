@@ -19,4 +19,6 @@ export class RealizarPago {
   @IsString()
   @IsOptional()
   observaciones: string;
+
+  numeroPago: string;
 }

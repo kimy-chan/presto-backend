@@ -6,7 +6,7 @@ import { EstadoE } from '../enum/estadoE';
 @Schema({ collection: 'Pago' })
 export class Pago {
   @Prop()
-  codigo: string;
+  numeroPago: string;
   @Prop()
   lectura: Types.ObjectId;
   @Prop({ default: 0 })
