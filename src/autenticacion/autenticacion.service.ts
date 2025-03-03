@@ -1,26 +1,38 @@
-import { Injectable } from '@nestjs/common';
-import { CreateAutenticacionDto } from './dto/create-autenticacion.dto';
-import { UpdateAutenticacionDto } from './dto/update-autenticacion.dto';
-
+import {
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { AutenticacionDto } from './dto/autenticacion.dto';
+import { UsuarioService } from 'src/usuario/usuario.service';
+import * as argon2 from 'argon2';
+import { JwtService } from '@nestjs/jwt';
 @Injectable()
 export class AutenticacionService {
-  create(createAutenticacionDto: CreateAutenticacionDto) {
-    return 'This action adds a new autenticacion';
-  }
+  constructor(
+    private readonly usuarioService: UsuarioService,
+    private readonly jwtService: JwtService,
+  ) {}
+  async autenticacion(autenticacionDto: AutenticacionDto) {
+    const usuario = await this.usuarioService.verificarUsuario(
+      autenticacionDto.usuario,
+    );
+    if (!usuario) {
+      throw new UnauthorizedException('Verifique sus credenciales');
+    }
+    const verificarContrasena = await argon2.verify(
+      usuario.password,
+      autenticacionDto.password,
+    );
+    if (verificarContrasena) {
+      const token = await this.jwtService.signAsync({
+        id: usuario._id,
+        rol: usuario.rol,
+      });
+      return { status: HttpStatus.OK, token };
+    }
 
-  findAll() {
-    return `This action returns all autenticacion`;
-  }
-
-  findOne(id: number) {
-    return `This action returns a #${id} autenticacion`;
-  }
-
-  update(id: number, updateAutenticacionDto: UpdateAutenticacionDto) {
-    return `This action updates a #${id} autenticacion`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} autenticacion`;
+    throw new UnauthorizedException('Verifique sus credenciales');
   }
 }
