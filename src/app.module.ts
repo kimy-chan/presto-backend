@@ -10,6 +10,8 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { MedidorModule } from './medidor/medidor.module';
 import { CategoriaGastoModule } from './categoria-gasto/categoria-gasto.module';
 import { LecturaModule } from './lectura/lectura.module';
+import { RolModule } from './rol/rol.module';
+import { PermisoModule } from './permiso/permiso.module';
 
 @Module({
   imports: [
@@ -34,7 +36,11 @@ import { LecturaModule } from './lectura/lectura.module';
     
   CategoriaGastoModule,
     
-  LecturaModule
+  LecturaModule,
+    
+  RolModule,
+    
+  PermisoModule
 ],
   controllers: [],
   providers: [],

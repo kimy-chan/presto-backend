@@ -1,35 +1,36 @@
-import { Prop, Schema } from "@nestjs/mongoose";
-import { FlagE } from "src/core-app/enums/flag";
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Types } from 'mongoose';
+import { FlagE } from 'src/core-app/enums/flag';
 
-@Schema({collection:'Usuario'})
+@Schema({ collection: 'Usuario' })
 export class Usuario {
-        @Prop()
-    nombre:string
+  @Prop()
+  nombre: string;
 
+  @Prop()
+  celular: string;
 
+  @Prop()
+  apellidoMaterno: string;
 
-     @Prop()
-        celular:string
-    
-        @Prop()
-        apellidoMaterno:string
-    
-        @Prop()
-        apellidoPaterno:string
-            @Prop()
-        usuario:string
-        
-            @Prop({select:false})
-        password:string
+  @Prop()
+  apellidoPaterno: string;
+  @Prop()
+  usuario: string;
 
-             @Prop({type:String, enum:FlagE, default:FlagE.nuevo})
-                flag:string
-            
-                @Prop({type:Date, default:Date.now() })
-                fecha:Date
-            
-        
+  @Prop({ select: false })
+  password: string;
 
-    
+  @Prop()
+  direccion: string;
 
+  @Prop({ type: String, enum: FlagE, default: FlagE.nuevo })
+  flag: string;
+
+  @Prop({ type: Types.ObjectId, ref: 'Rol' })
+  rol: string;
+
+  @Prop({ type: Date, default: Date.now() })
+  fecha: Date;
 }
+export const usuarioSchema = SchemaFactory.createForClass(Usuario);

@@ -4,6 +4,7 @@ import {
   HttpStatus,
   Injectable,
   NotFoundException,
+  Param,
   Type,
 } from '@nestjs/common';
 import { CreatePagoDto } from './dto/create-pago.dto';
@@ -23,6 +24,8 @@ import { ClienteService } from 'src/cliente/cliente.service';
 import { MedidorService } from 'src/medidor/medidor.service';
 import { format } from 'path';
 import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
+import { BuscadorPagosClienteI } from './interface/buscadorPagoCliente';
+import { BuscarPagoClienteDto } from './dto/BuscarPagoCliente.dto';
 
 @Injectable()
 export class PagoService {
@@ -100,14 +103,54 @@ export class PagoService {
     return { status: HttpStatus.OK, pagos: pagos, cliente: cliente };
   }
 
-  async listarPagos(buscadorClienteDto: BuscadorClienteDto) {
-    console.log(buscadorClienteDto);
+  private buscadorPagosCliente(buscadorClienteDto: BuscarPagoClienteDto) {
+    const filter: BuscadorPagosClienteI = {};
+    buscadorClienteDto.ci ? (filter.ci = buscadorClienteDto.ci) : filter;
+    buscadorClienteDto.nombre
+      ? (filter.nombre = new RegExp(buscadorClienteDto.nombre, 'i'))
+      : filter;
+    buscadorClienteDto.apellidoPaterno
+      ? (filter.apellidoPaterno = new RegExp(
+          buscadorClienteDto.apellidoPaterno,
+          'i',
+        ))
+      : filter;
+    buscadorClienteDto.apellidoMaterno
+      ? (filter.apellidoMaterno = new RegExp(
+          buscadorClienteDto.apellidoMaterno,
+          'i',
+        ))
+      : filter;
+    buscadorClienteDto.numeroMedidor
+      ? (filter.numeroMedidor = buscadorClienteDto.numeroMedidor)
+      : filter;
+
+    buscadorClienteDto.fechaInicio && buscadorClienteDto.fechaFin
+      ? (filter.fecha = {
+          $gte: new Date(buscadorClienteDto.fechaInicio),
+          $lte: new Date(buscadorClienteDto.fechaFin),
+        })
+      : filter;
+
+    return filter;
+  }
+
+  async listarPagos(buscadorClienteDto: BuscarPagoClienteDto) {
+    const {
+      apellidoMaterno,
+      apellidoPaterno,
+      ci,
+      fecha,
+      nombre,
+      numeroMedidor,
+    } = this.buscadorPagosCliente(buscadorClienteDto);
 
     try {
       const pagos = await this.pago.aggregate([
         {
           $match: {
             flag: FlagE.nuevo,
+            ...(fecha ? { fecha: fecha } : {}),
           },
         },
 
@@ -137,6 +180,15 @@ export class PagoService {
           $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
         },
 
+        ...(numeroMedidor
+          ? [
+              {
+                $match: {
+                  'medidor.numeroMedidor': numeroMedidor,
+                },
+              },
+            ]
+          : []),
         {
           $lookup: {
             from: 'Cliente',
@@ -149,6 +201,45 @@ export class PagoService {
         {
           $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
         },
+        ...(ci
+          ? [
+              {
+                $match: {
+                  'cliente.ci': ci,
+                },
+              },
+            ]
+          : []),
+
+        ...(nombre
+          ? [
+              {
+                $match: {
+                  'cliente.nombre': nombre,
+                },
+              },
+            ]
+          : []),
+
+        ...(apellidoPaterno
+          ? [
+              {
+                $match: {
+                  'cliente.apellidoPaterno': apellidoPaterno,
+                },
+              },
+            ]
+          : []),
+
+        ...(apellidoMaterno
+          ? [
+              {
+                $match: {
+                  'cliente.apellidoMaterno': apellidoMaterno,
+                },
+              },
+            ]
+          : []),
 
         {
           $lookup: {
@@ -171,8 +262,10 @@ export class PagoService {
             nombre: '$cliente.nombre',
             apellidoPaterno: '$cliente.apellidoPaterno',
             apellidoMaterno: '$cliente.apellidoMaterno',
+            tarifa: '$tarifa.nombre',
             codigoMedidor: '$medidor.codigo',
             numeroMedidor: '$medidor.numeroMedidor',
+            medidor: '$lectura.medidor',
             lecturaActual: '$lectura.lecturaActual',
             lecturaAnterior: '$lectura.lecturaAnterior',
             consumoTotal: '$lectura.consumoTotal',
@@ -189,8 +282,32 @@ export class PagoService {
             numeroPago: 1,
           },
         },
+        {
+          $facet: {
+            data: [
+              {
+                $limit: buscadorClienteDto.limite,
+              },
+              {
+                $skip:
+                  (buscadorClienteDto.pagina - 1) * buscadorClienteDto.limite,
+              },
+            ],
+            documentos: [
+              {
+                $count: 'total',
+              },
+            ],
+          },
+        },
       ]);
-      return pagos;
+      const documentos = pagos[0].documentos[0]
+        ? pagos[0].documentos[0].total
+        : 1;
+      console.log(pagos[0].data);
+
+      const paginas = Math.ceil(documentos / buscadorClienteDto.limite);
+      return { status: HttpStatus.OK, data: pagos[0].data, paginas };
     } catch (error) {
       console.log(error);
     }
