@@ -1,9 +1,14 @@
-import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Cliente } from './schema/cliente.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { BuscadorClienteDto } from './dto/BuscadorCliente.dto';
 import { BuscadorClienteI } from './interface/BuscadorCliente';
@@ -81,16 +86,47 @@ export class ClienteService {
     return { status: HttpStatus.OK, paginas: paginas, data: clientes };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} cliente`;
+  async findOne(id: Types.ObjectId) {
+    const cliente = await this.cliente.findOne({ _id: new Types.ObjectId(id) });
+    if (!cliente) {
+      throw new NotFoundException('El cliente no existe');
+    }
+
+    return { status: HttpStatus.OK, data: cliente };
   }
 
-  update(id: number, updateClienteDto: UpdateClienteDto) {
-    return `This action updates a #${id} cliente`;
+  async editar(id: Types.ObjectId, updateClienteDto: UpdateClienteDto) {
+    const cliente = await this.cliente.findOne({
+      _id: { $ne: new Types.ObjectId(id) },
+      ci: updateClienteDto.ci,
+      flag: FlagE.nuevo,
+    });
+    if (cliente && cliente.ci) {
+      throw new ConflictException('El ci ya se encuentra registrado');
+    }
+    await this.cliente.updateOne(
+      { _id: new Types.ObjectId(id) },
+      updateClienteDto,
+    );
+    return { status: HttpStatus.OK };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} cliente`;
+  async softDelete(id: Types.ObjectId) {
+    console.log(id);
+
+    const cliente = await this.cliente.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+
+    if (!cliente) {
+      throw new NotFoundException();
+    }
+    await this.cliente.updateOne(
+      { _id: new Types.ObjectId(id) },
+      { flag: FlagE.eliminado },
+    );
+    return { status: HttpStatus.OK };
   }
 
   private async generarCodigo() {

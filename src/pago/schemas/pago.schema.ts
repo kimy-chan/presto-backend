@@ -1,7 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
-import { EstadoE } from '../enum/estadoE';
+import { EstadoPagoE } from '../enum/estadoE';
 
 @Schema({ collection: 'Pago' })
 export class Pago {
@@ -16,7 +16,7 @@ export class Pago {
   @Prop()
   gestion: string;
 
-  @Prop({ type: String, enum: EstadoE })
+  @Prop({ type: String, enum: EstadoPagoE })
   estado: string;
 
   @Prop({ type: Types.ObjectId, default: 'Usuario' })

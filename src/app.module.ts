@@ -12,37 +12,43 @@ import { CategoriaGastoModule } from './categoria-gasto/categoria-gasto.module';
 import { LecturaModule } from './lectura/lectura.module';
 import { RolModule } from './rol/rol.module';
 import { PermisoModule } from './permiso/permiso.module';
+import { APP_GUARD } from '@nestjs/core';
+import { TokenGuard } from './autenticacion/guards/token/token.guard';
 
 @Module({
   imports: [
     MongooseModule.forRoot('mongodb://localhost:27017/presto'),
-    
-  ClienteModule,
-    
-  AutenticacionModule,
-    
-  GastoModule,
-    
-  TarifaModule,
-    
-  PagoModule,
-    
-    
-  UsuarioModule,
-    
-  CoreAppModule,
-    
-  MedidorModule,
-    
-  CategoriaGastoModule,
-    
-  LecturaModule,
-    
-  RolModule,
-    
-  PermisoModule
-],
+
+    ClienteModule,
+
+    AutenticacionModule,
+
+    GastoModule,
+
+    TarifaModule,
+
+    PagoModule,
+
+    UsuarioModule,
+
+    CoreAppModule,
+
+    MedidorModule,
+
+    CategoriaGastoModule,
+
+    LecturaModule,
+
+    RolModule,
+
+    PermisoModule,
+  ],
   controllers: [],
-  providers: [],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: TokenGuard,
+    },
+  ],
 })
 export class AppModule {}

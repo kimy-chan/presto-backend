@@ -8,7 +8,7 @@ import { CreateRolDto } from './dto/create-rol.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
 import { Rol } from './schema/rol.schema';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 
 @Injectable()
@@ -29,6 +29,15 @@ export class RolService {
   async listarRoles() {
     const roles = await this.rol.find({ flag: FlagE.nuevo });
     return roles;
+  }
+
+  async listarRolUsuario(rolUser: Types.ObjectId) {
+    const rol = await this.rol.findOne({
+      _id: new Types.ObjectId(rolUser),
+      flag: FlagE.nuevo,
+    });
+
+    return rol;
   }
 
   findOne(id: number) {

@@ -48,7 +48,7 @@ export class Lectura {
   fecha: Date;
 
   @Prop({ type: Date })
-  fechaCorte: Date;
+  fechaVencimiento: Date;
 }
 
 export const lecturaSchema = SchemaFactory.createForClass(Lectura);

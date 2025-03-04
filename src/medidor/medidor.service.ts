@@ -1,9 +1,11 @@
 import {
+  BadRequestException,
   ConflictException,
   forwardRef,
   HttpStatus,
   Inject,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateMedidorDto } from './dto/create-medidor.dto';
 import { UpdateMedidorDto } from './dto/update-medidor.dto';
@@ -17,6 +19,7 @@ import { DataMedidorI } from './interface/dataMedidor';
 import { DataMedidorCliente } from './interface/dataMedidorCliente';
 import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 import { BuscadorMedidorClienteI } from './interface/buscadorMedidorCliente';
+import { runInThisContext } from 'vm';
 @Injectable()
 export class MedidorService {
   constructor(
@@ -96,6 +99,11 @@ export class MedidorService {
 
       {
         $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+      },
+      {
+        $match: {
+          'cliente.flag': FlagE.nuevo,
+        },
       },
 
       ...(nombre
@@ -181,16 +189,52 @@ export class MedidorService {
     return { status: HttpStatus.OK, data: medidores[0].data, paginas: paginas };
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} medidor`;
+  async findOne(id: Types.ObjectId) {
+    const medidor = await this.medidor.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    return { status: HttpStatus.OK, data: medidor };
   }
 
-  update(id: number, updateMedidorDto: UpdateMedidorDto) {
-    return `This action updates a #${id} medidor`;
+  async editar(id: Types.ObjectId, updateMedidorDto: UpdateMedidorDto) {
+    const medidor = await this.medidor.findOne({
+      numeroMedidor: updateMedidorDto.numeroMedidor,
+      _id: { $ne: new Types.ObjectId(id) },
+    });
+    if (medidor && medidor.numeroMedidor) {
+      throw new ConflictException('El numero de medidor ya existe');
+    }
+    updateMedidorDto.tarifa = new Types.ObjectId(updateMedidorDto.tarifa);
+    await this.medidor.updateOne(
+      { _id: new Types.ObjectId(id) },
+      updateMedidorDto,
+    );
+    return { status: HttpStatus.OK };
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} medidor`;
+  async softDelete(id: Types.ObjectId) {
+    try {
+      const medidor = await this.medidor.findOne({
+        _id: new Types.ObjectId(id),
+        flag: FlagE.nuevo,
+      });
+      if (!medidor) {
+        throw new NotFoundException('El medidor no existe');
+      }
+      await this.medidor.updateOne(
+        {
+          _id: new Types.ObjectId(id),
+        },
+        { flag: FlagE.eliminado },
+      );
+
+      return { status: HttpStatus.OK };
+    } catch (error) {
+      console.log(error);
+
+      new BadRequestException();
+    }
   }
   private async generarCodigo() {
     let countDocuments = await this.medidor.countDocuments({
@@ -206,7 +250,7 @@ export class MedidorService {
       {
         $match: {
           numeroMedidor: numeroMedidor,
-          estado: EstadoMedidorE.activo,
+          flag: FlagE.nuevo,
         },
       },
       {

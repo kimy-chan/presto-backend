@@ -1,5 +1,5 @@
-export enum EstadoMedidorE{
-    activo='activo',
-    inactivo='inactivo',
-    matenimiento='mantenimiento'
+export enum EstadoMedidorE {
+  activo = 'ACTIVO',
+  inactivo = 'INACTIVO',
+  matenimiento = 'MANTENIMIENTO',
 }

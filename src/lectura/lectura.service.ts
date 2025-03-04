@@ -5,7 +5,7 @@ import {
   HttpStatus,
   Inject,
   Injectable,
-  Param,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateLecturaDto } from './dto/create-lectura.dto';
 import { UpdateLecturaDto } from './dto/update-lectura.dto';
@@ -13,7 +13,7 @@ import { InjectModel } from '@nestjs/mongoose';
 import { Lectura } from './schemas/lectura.schema';
 import { Aggregate, Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
-import { LecturaI } from './interface/lectura';
+import { EditarLecturaI, LecturaI } from './interface/lectura';
 import { PagoService } from 'src/pago/pago.service';
 import { MedidorService } from 'src/medidor/medidor.service';
 import { DataLecturaI } from './interface/dataLectura';
@@ -21,10 +21,10 @@ import { RangoService } from 'src/tarifa/services/rango.service';
 import { types } from 'util';
 import { EstadoMedidorE } from 'src/medidor/enums/estados';
 import { EstadoLecturaE } from './enums/estadoLectura';
-import { EstadoE } from 'src/pago/enum/estadoE';
 import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
 import { BuscadorLecturaDto } from './dto/BuscadorLectura.dto';
 import { BuscadorLecturaI } from './interface/buscadorLectura';
+import { UpdateRolDto } from 'src/rol/dto/update-rol.dto';
 @Injectable()
 export class LecturaService {
   constructor(
@@ -50,9 +50,10 @@ export class LecturaService {
 
     return filter;
   }
-  async create(createLecturaDto: CreateLecturaDto) {
+  async create(createLecturaDto: CreateLecturaDto, usuario: Types.ObjectId) {
     const date = new Date();
     const gestion = date.getFullYear();
+    date.setMonth(date.getMonth() + 3);
 
     const lectura = await this.lectura.findOne({
       flag: FlagE.nuevo,
@@ -84,9 +85,11 @@ export class LecturaService {
         lecturaActual: createLecturaDto.lecturaActual,
         lecturaAnterior: createLecturaDto.lecturaAnterior,
         medidor: new Types.ObjectId(createLecturaDto.medidor),
+        usuario: new Types.ObjectId(usuario),
         mes: createLecturaDto.mes,
         costoApagar: costoApagar,
         gestion: String(gestion),
+        fechaVencimiento: date,
       };
       const lectura = await this.lectura.create(dataLectura);
       return { status: HttpStatus.CREATED, lectura: lectura._id };
@@ -169,11 +172,18 @@ export class LecturaService {
           apellidoMaterno: '$cliente.apellidoMaterno',
           direccion: '$medidor.direccion',
           categoria: '$tarifa.nombre',
+
           gestion: 1,
           fecha: {
             $dateToString: {
               format: '%Y-%m-%d',
               date: '$fecha',
+            },
+          },
+          fechaVencimiento: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$fechaVencimiento',
             },
           },
           lecturaActual: 1,
@@ -208,7 +218,11 @@ export class LecturaService {
         {
           $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
         },
-
+        {
+          $match: {
+            'medidor.flag': FlagE.nuevo,
+          },
+        },
         ...(numeroMedidor
           ? [{ $match: { 'medidor.numeroMedidor': numeroMedidor } }]
           : []),
@@ -248,6 +262,12 @@ export class LecturaService {
                 date: '$fecha',
               },
             },
+            fechaVencimiento: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$fechaVencimiento',
+              },
+            },
           },
         },
         {
@@ -282,8 +302,15 @@ export class LecturaService {
     }
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} lectura`;
+  async findOne(id: Types.ObjectId) {
+    const lectura = await this.lectura.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    if (!lectura) {
+      throw new NotFoundException('Lectura no encontrada');
+    }
+    return { status: HttpStatus.OK, data: lectura };
   }
 
   update(id: number, updateLecturaDto: UpdateLecturaDto) {
@@ -295,8 +322,11 @@ export class LecturaService {
   }
   private async calcularTarifa(consumoTotal: number, tarifa: Types.ObjectId) {
     const rangos = await this.rangoService.tarifaRangoMedidor(tarifa);
+    console.log(rangos);
+
     let consumo = consumoTotal; // lectura actual
     let costoTotal = 0;
+
     for (const rango of rangos) {
       let capacidadAgua = Math.min(consumo, rango.rango2 - rango.rango1);
       const costo = capacidadAgua * rango.costo;
@@ -332,5 +362,62 @@ export class LecturaService {
       },
       { estado: EstadoLecturaE.PAGADO },
     );
+  }
+
+  async editarLectura(id: Types.ObjectId, updateLecturaDto: UpdateLecturaDto) {
+    try {
+      const lectura = await this.lectura.findOne({
+        _id: new Types.ObjectId(id),
+        flag: FlagE.nuevo,
+        estado: EstadoLecturaE.PENDIENTE,
+      });
+      if (!lectura) {
+        throw new NotFoundException(
+          'No se encontro la lectura | ya fue pagada',
+        );
+      }
+      const lecturaActual: number = updateLecturaDto.lecturaActual
+        ? updateLecturaDto.lecturaActual
+        : 0;
+
+      const lecturaAnterior: number = updateLecturaDto.lecturaAnterior
+        ? updateLecturaDto.lecturaAnterior
+        : 0;
+
+      const medidor = await this.medidorService.buscarMedidorActivo(
+        lectura.medidor,
+      );
+      if (medidor) {
+        const consumo = lecturaActual - lecturaAnterior;
+        const costoApagar = await this.calcularTarifa(consumo, medidor.tarifa);
+        const data: EditarLecturaI = {
+          consumoTotal: consumo,
+          lecturaAnterior: updateLecturaDto.lecturaAnterior,
+          lecturaActual: updateLecturaDto.lecturaActual,
+          costoApagar: costoApagar,
+        };
+        await this.lectura.updateOne({ _id: new Types.ObjectId(id) }, data);
+        return { status: HttpStatus.OK };
+      }
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async softDelete(id: Types.ObjectId) {
+    const lectura = await this.lectura.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+      estado: EstadoLecturaE.PENDIENTE,
+    });
+    if (!lectura) {
+      throw new NotFoundException('No se encontro la lectura | ya fue pagada');
+    }
+
+    await this.lectura.updateOne(
+      { _id: new Types.ObjectId(id) },
+      { flag: FlagE.eliminado },
+    );
+    return { status: HttpStatus.OK };
   }
 }

@@ -5,6 +5,8 @@ import { FlagE } from 'src/core-app/enums/flag';
 @Schema({ collection: 'Usuario' })
 export class Usuario {
   @Prop()
+  ci: string;
+  @Prop()
   nombre: string;
 
   @Prop()
@@ -18,7 +20,7 @@ export class Usuario {
   @Prop()
   usuario: string;
 
-  @Prop({ select: false })
+  @Prop()
   password: string;
 
   @Prop()

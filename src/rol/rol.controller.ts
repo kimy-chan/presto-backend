@@ -6,10 +6,13 @@ import {
   Patch,
   Param,
   Delete,
+  Req,
 } from '@nestjs/common';
 import { RolService } from './rol.service';
 import { CreateRolDto } from './dto/create-rol.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
+import { Public } from 'src/autenticacion/decorators/Public';
+import { Request } from 'express';
 
 @Controller('rol')
 export class RolController {
@@ -23,6 +26,16 @@ export class RolController {
   @Get()
   listarRoles() {
     return this.rolService.listarRoles();
+  }
+
+  @Get('publicas')
+  @Public()
+  listarRolesPublicas() {
+    return this.rolService.listarRoles();
+  }
+  @Get('user')
+  listarRolUsuario(@Req() request: Request) {
+    return this.rolService.listarRolUsuario(request.rol);
   }
 
   @Get(':id')

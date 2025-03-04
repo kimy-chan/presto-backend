@@ -6,6 +6,7 @@ export interface LecturaI {
   lecturaAnterior: number;
 
   medidor: Types.ObjectId;
+  usuario: Types.ObjectId;
 
   codigo: number;
 
@@ -18,4 +19,7 @@ export interface LecturaI {
   numeroLectura: number;
 
   costoApagar: number;
+  fechaVencimiento: Date;
 }
+
+export interface EditarLecturaI extends Partial<LecturaI> {}

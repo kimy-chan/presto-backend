@@ -1,4 +1,4 @@
-export enum EstadoE {
+export enum EstadoPagoE {
   PENDIENTE = 'PENDIENTE',
-  COMPLETADO = 'COMPLETADO',
+  PAGADO = 'PAGADO',
 }

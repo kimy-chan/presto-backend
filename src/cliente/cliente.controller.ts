@@ -12,6 +12,8 @@ import { ClienteService } from './cliente.service';
 import { CreateClienteDto } from './dto/create-cliente.dto';
 import { UpdateClienteDto } from './dto/update-cliente.dto';
 import { BuscadorClienteDto } from './dto/BuscadorCliente.dto';
+import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
+import { Types } from 'mongoose';
 
 @Controller('cliente')
 export class ClienteController {
@@ -28,18 +30,21 @@ export class ClienteController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.clienteService.findOne(+id);
+  findOne(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.clienteService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateClienteDto: UpdateClienteDto) {
-    return this.clienteService.update(+id, updateClienteDto);
+  editar(
+    @Param('id', ValidateIdPipe) id: Types.ObjectId,
+    @Body() updateClienteDto: UpdateClienteDto,
+  ) {
+    return this.clienteService.editar(id, updateClienteDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.clienteService.remove(+id);
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.clienteService.softDelete(id);
   }
 
   @Get('buscar/:codigo')

@@ -9,18 +9,38 @@ import { FlagE } from 'src/core-app/enums/flag';
 
 @Injectable()
 export class UsuarioService {
+  private configuracionArgon: argon2.Options = {
+    type: argon2.argon2i,
+    timeCost: 3,
+    parallelism: 1,
+  };
   constructor(
     @InjectModel(Usuario.name) private readonly usuario: Model<Usuario>,
   ) {}
   async create(createUsuarioDto: CreateUsuarioDto) {
+    const ci = await this.usuario.findOne({
+      usuario: createUsuarioDto.ci,
+      flag: FlagE.nuevo,
+    });
     const usuario = await this.usuario.findOne({
       usuario: createUsuarioDto.usuario,
       flag: FlagE.nuevo,
     });
-    if (usuario) {
-      throw new ConflictException('El usuario ya existe');
+    if (ci) {
+      throw new ConflictException({
+        propiedad: 'ci',
+        message: 'El ci ya existe',
+      });
     }
-    createUsuarioDto.password = await argon2.hash(createUsuarioDto.password);
+    if (usuario) {
+      throw new ConflictException({
+        propiedad: 'usuario',
+        message: 'El usuario ya existe',
+      });
+    }
+    createUsuarioDto.password = await argon2.hash(createUsuarioDto.password, {
+      ...this.configuracionArgon,
+    });
     createUsuarioDto.rol = new Types.ObjectId(createUsuarioDto.rol);
     await this.usuario.create(createUsuarioDto);
     return { status: HttpStatus.CREATED };
@@ -45,11 +65,13 @@ export class UsuarioService {
       },
       {
         $project: {
+          ci: 1,
           nombre: 1,
           apellidoPaterno: 1,
           apellidoMaterno: 1,
           usuario: 1,
           direccion: 1,
+          celular: 1,
           rolNombre: '$rol.nombre',
           rol: 1,
         },
@@ -58,6 +80,21 @@ export class UsuarioService {
     return usuarios;
   }
 
+  async verificarUsuario(usuario: string) {
+    const user = await this.usuario.findOne({
+      usuario: usuario,
+      flag: FlagE.nuevo,
+    });
+    return user;
+  }
+
+  async verificarUsuarioId(id: Types.ObjectId) {
+    const user = await this.usuario.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    return user;
+  }
   findOne(id: number) {
     return `This action returns a #${id} usuario`;
   }

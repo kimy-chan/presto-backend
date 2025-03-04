@@ -7,23 +7,25 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { LecturaService } from './lectura.service';
 import { CreateLecturaDto } from './dto/create-lectura.dto';
 import { UpdateLecturaDto } from './dto/update-lectura.dto';
 import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 import { Types } from 'mongoose';
-import { query } from 'express';
+import { query, Request } from 'express';
 import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
 import { BuscadorLecturaDto } from './dto/BuscadorLectura.dto';
+import { request } from 'http';
 
 @Controller('lectura')
 export class LecturaController {
   constructor(private readonly lecturaService: LecturaService) {}
 
   @Post()
-  create(@Body() createLecturaDto: CreateLecturaDto) {
-    return this.lecturaService.create(createLecturaDto);
+  create(@Body() createLecturaDto: CreateLecturaDto, @Req() request: Request) {
+    return this.lecturaService.create(createLecturaDto, request.user);
   }
 
   @Get()
@@ -32,18 +34,21 @@ export class LecturaController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.lecturaService.findOne(+id);
+  findOne(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.lecturaService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateLecturaDto: UpdateLecturaDto) {
-    return this.lecturaService.update(+id, updateLecturaDto);
+  editarLectura(
+    @Param('id', ValidateIdPipe) id: Types.ObjectId,
+    @Body() updateLecturaDto: UpdateLecturaDto,
+  ) {
+    return this.lecturaService.editarLectura(id, updateLecturaDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.lecturaService.remove(+id);
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.lecturaService.softDelete(id);
   }
 
   @Get('recibo/:id')

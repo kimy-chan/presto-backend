@@ -4,6 +4,10 @@ import { Types } from 'mongoose';
 export class CreateUsuarioDto {
   @IsString()
   @IsNotEmpty()
+  ci: string;
+
+  @IsString()
+  @IsNotEmpty()
   nombre: string;
 
   @IsString()

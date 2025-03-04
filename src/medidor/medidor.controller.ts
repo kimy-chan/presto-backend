@@ -32,18 +32,21 @@ export class MedidorController {
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.medidorService.findOne(+id);
+  findOne(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.medidorService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateMedidorDto: UpdateMedidorDto) {
-    return this.medidorService.update(+id, updateMedidorDto);
+  editar(
+    @Param('id', ValidateIdPipe) id: Types.ObjectId,
+    @Body() updateMedidorDto: UpdateMedidorDto,
+  ) {
+    return this.medidorService.editar(id, updateMedidorDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.medidorService.remove(+id);
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.medidorService.softDelete(id);
   }
 
   @Get('buscar/:numeroMedidor')
