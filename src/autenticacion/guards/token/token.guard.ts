@@ -31,13 +31,9 @@ export class TokenGuard implements CanActivate {
       const token = request.headers.authorization?.split(' ')[1];
       if (token) {
         const payload: PayloadI = await this.jwtService.verifyAsync(token);
-        console.log(payload);
-
         const usuario = await this.usuarioService.verificarUsuarioId(
           payload.id,
         );
-        console.log('user', usuario);
-
         if (usuario) {
           request.user = usuario._id;
           request.rol = new Types.ObjectId(usuario.rol);
