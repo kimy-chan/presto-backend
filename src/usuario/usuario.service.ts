@@ -1,4 +1,9 @@
-import { ConflictException, HttpStatus, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  HttpStatus,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { CreateUsuarioDto } from './dto/createUsuario.dto';
 import { UpdateUsuarioDto } from './dto/update-usuario.dto';
 import { InjectModel } from '@nestjs/mongoose';
@@ -6,6 +11,7 @@ import { Usuario } from './schema/usuario.schema';
 import { Model, Types } from 'mongoose';
 import * as argon2 from 'argon2';
 import { FlagE } from 'src/core-app/enums/flag';
+import { Type } from 'class-transformer';
 
 @Injectable()
 export class UsuarioService {
@@ -95,15 +101,63 @@ export class UsuarioService {
     });
     return user;
   }
-  findOne(id: number) {
-    return `This action returns a #${id} usuario`;
+
+  async findOne(id: Types.ObjectId) {
+    const usuario = await this.usuario.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    return { status: HttpStatus.OK, data: usuario };
   }
 
-  update(id: number, updateUsuarioDto: UpdateUsuarioDto) {
-    return `This action updates a #${id} usuario`;
+  async editarUsuario(id: Types.ObjectId, updateUsuarioDto: UpdateUsuarioDto) {
+    try {
+      const ci = await this.usuario.findOne({
+        ci: updateUsuarioDto.ci,
+        flag: FlagE.nuevo,
+        _id: { $ne: new Types.ObjectId(id) },
+      });
+
+      if (ci && ci.ci) {
+        throw new ConflictException({
+          propiedad: 'ci',
+          message: 'El ci ya encuentra registrado',
+        });
+      }
+      const usuario = await this.usuario.findOne({
+        usuario: updateUsuarioDto.usuario,
+        flag: FlagE.nuevo,
+        _id: { $ne: new Types.ObjectId(id) },
+      });
+      if (usuario && usuario.usuario) {
+        throw new ConflictException({
+          propiedad: 'usuario',
+          message: 'El usuario ya se encutra registrado',
+        });
+      }
+      updateUsuarioDto.rol = new Types.ObjectId(updateUsuarioDto.rol);
+      await this.usuario.updateOne(
+        { _id: new Types.ObjectId(id), flag: FlagE.nuevo },
+        updateUsuarioDto,
+      );
+      return { status: HttpStatus.OK };
+    } catch (error) {
+      throw error;
+    }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} usuario`;
+  async softDelete(id: Types.ObjectId) {
+    const usuario = await this.usuario.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    if (!usuario) {
+      throw new NotFoundException();
+    }
+    await this.usuario.updateOne(
+      { _id: new Types.ObjectId(id), flag: FlagE.nuevo },
+      { flag: FlagE.eliminado },
+    );
+    return { status: HttpStatus.OK };
   }
 }
