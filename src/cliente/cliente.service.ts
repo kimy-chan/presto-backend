@@ -136,12 +136,4 @@ export class ClienteService {
     countDocuments += 1;
     return countDocuments;
   }
-
-  async buscarClietePorCodigo(codigo: string) {
-    const cliente = this.cliente.findOne({
-      flag: FlagE.nuevo,
-      codigo: new RegExp(codigo, 'i'),
-    });
-    return cliente;
-  }
 }

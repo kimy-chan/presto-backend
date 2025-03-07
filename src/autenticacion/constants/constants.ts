@@ -4,3 +4,9 @@ export const jwtConstants = {
 };
 
 export const PUBLIC_KEY = 'SDFGHJHGRFEERTEWRTFVNBXVZ';
+
+export const PERMISO_KEY =
+  'SDFGHJHGRFEERTEWRTFVNBXVFGRTHYRHERWRQEWQgghjfhdgrsfdZ';
+
+export const PUBLIC_INTERNO_KEY =
+  'SDFGHJHGRFEERTEWRTFVNBXVFGRTHYRHERWRQEWQgghjfhdgrsfdZ';

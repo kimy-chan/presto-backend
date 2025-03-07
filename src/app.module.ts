@@ -14,6 +14,7 @@ import { RolModule } from './rol/rol.module';
 import { PermisoModule } from './permiso/permiso.module';
 import { APP_GUARD } from '@nestjs/core';
 import { TokenGuard } from './autenticacion/guards/token/token.guard';
+import { PermisoGuard } from './autenticacion/guards/permiso/permiso.guard';
 
 @Module({
   imports: [
@@ -48,6 +49,10 @@ import { TokenGuard } from './autenticacion/guards/token/token.guard';
     {
       provide: APP_GUARD,
       useClass: TokenGuard,
+    },
+    {
+      provide: APP_GUARD,
+      useClass: PermisoGuard,
     },
   ],
 })

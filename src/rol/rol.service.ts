@@ -3,6 +3,7 @@ import {
   HttpCode,
   HttpStatus,
   Injectable,
+  NotFoundException,
 } from '@nestjs/common';
 import { CreateRolDto } from './dto/create-rol.dto';
 import { UpdateRolDto } from './dto/update-rol.dto';
@@ -40,15 +41,51 @@ export class RolService {
     return rol;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} rol`;
+  async findOne(id: Types.ObjectId) {
+    const rol = await this.rol.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    if (!rol) {
+      throw new NotFoundException('El rol no existe');
+    }
+
+    return { status: HttpStatus.OK, data: rol };
   }
 
-  update(id: number, updateRolDto: UpdateRolDto) {
-    return `This action updates a #${id} rol`;
+  async veririficarRol(id: Types.ObjectId) {
+    const rol = await this.rol.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+
+    return rol;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} rol`;
+  async editarRol(id: Types.ObjectId, updateRolDto: UpdateRolDto) {
+    const rol = await this.rol.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    if (!rol) {
+      throw new NotFoundException('El rol no existe');
+    }
+    await this.rol.updateOne({ _id: new Types.ObjectId(id) }, updateRolDto);
+    return { status: HttpStatus.OK };
+  }
+
+  async softDelete(id: Types.ObjectId) {
+    const rol = await this.rol.findOne({
+      _id: new Types.ObjectId(id),
+      flag: FlagE.nuevo,
+    });
+    if (!rol) {
+      throw new NotFoundException('El rol no existe');
+    }
+    await this.rol.updateOne(
+      { _id: new Types.ObjectId(id) },
+      { flag: FlagE.eliminado },
+    );
+    return { status: HttpStatus.OK };
   }
 }

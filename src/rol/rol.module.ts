@@ -15,5 +15,6 @@ import { Rol, RolSchema } from './schema/rol.schema';
   ],
   controllers: [RolController],
   providers: [RolService],
+  exports: [RolService],
 })
 export class RolModule {}
