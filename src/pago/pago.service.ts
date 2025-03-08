@@ -304,7 +304,6 @@ export class PagoService {
       const documentos = pagos[0].documentos[0]
         ? pagos[0].documentos[0].total
         : 1;
-      console.log(pagos[0].data);
 
       const paginas = Math.ceil(documentos / buscadorClienteDto.limite);
       return { status: HttpStatus.OK, data: pagos[0].data, paginas };

@@ -5,20 +5,15 @@ import {
   Body,
   Patch,
   Param,
-  Delete,
   Query,
 } from '@nestjs/common';
 import { PagoService } from './pago.service';
-import { CreatePagoDto } from './dto/create-pago.dto';
-import { UpdatePagoDto } from './dto/update-pago.dto';
-import { BuscarPagoDto } from './dto/buscarPago.dto';
 import { RealizarPago } from './dto/realizarPago.dto';
 import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 import { Types } from 'mongoose';
 import { BuscarPagoClienteDto } from './dto/BuscarPagoCliente.dto';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
-import { PublicInterno } from 'src/autenticacion/decorators/PublicInterno';
 
 @Controller('pago')
 export class PagoController {
@@ -31,13 +26,13 @@ export class PagoController {
   }
 
   @Get('cliente/:medidor')
-  @PublicInterno()
+  @Permiso([PermisosE.LISTAR_PAGO])
   pagosCliente(@Param('medidor', ValidateIdPipe) medidor: Types.ObjectId) {
     return this.pagoService.pagosCliente(medidor);
   }
 
-  @Get('listar')
   @Permiso([PermisosE.LISTAR_PAGO])
+  @Get('listar')
   listarPagos(@Query() buscadorClienteDto: BuscarPagoClienteDto) {
     return this.pagoService.listarPagos(buscadorClienteDto);
   }

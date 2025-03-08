@@ -19,7 +19,7 @@ import { DataMedidorI } from './interface/dataMedidor';
 import { DataMedidorCliente } from './interface/dataMedidorCliente';
 import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 import { BuscadorMedidorClienteI } from './interface/buscadorMedidorCliente';
-import { runInThisContext } from 'vm';
+
 @Injectable()
 export class MedidorService {
   constructor(
@@ -79,7 +79,6 @@ export class MedidorService {
   ) {
     const { numeroMedidor, apellidoMaterno, apellidoPaterno, ci, nombre } =
       this.filtradorMedidorCliente(buscadorMedidorClienteDto);
-    console.log(apellidoPaterno);
 
     const medidores = await this.medidor.aggregate([
       {
@@ -182,6 +181,7 @@ export class MedidorService {
         },
       },
     ]);
+
     const cantidadItems = medidores[0].countDocuments[0]
       ? medidores[0].countDocuments[0].total
       : 1;

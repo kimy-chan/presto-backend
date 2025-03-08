@@ -23,7 +23,9 @@ export class PermisoGuard implements CanActivate {
   async canActivate(context: ExecutionContext): Promise<boolean> {
     try {
       const request: Request = context.switchToHttp().getRequest();
+
       const publico = this.reflector.get(PUBLIC_KEY, context.getHandler());
+
       if (publico) {
         return true;
       }
@@ -32,21 +34,27 @@ export class PermisoGuard implements CanActivate {
         PUBLIC_INTERNO_KEY,
         context.getHandler(),
       );
+
       if (publicoInterno) {
+        console.log('ha', publicoInterno);
+
         return true;
       }
+
       const permisos = this.reflector.get<PermisosE[]>(
         PERMISO_KEY,
         context.getHandler(),
       );
+
       const rol = await this.rolService.veririficarRol(request.rol);
-      console.log(rol);
 
       if (rol) {
         return permisos.some((permiso) => rol.permisos.includes(permiso));
       }
       throw new UnauthorizedException();
     } catch (error) {
+      console.log(error);
+
       throw new UnauthorizedException();
     }
   }
