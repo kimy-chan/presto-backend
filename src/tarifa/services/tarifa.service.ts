@@ -69,7 +69,7 @@ export class TarifaService {
         flag: FlagE.nuevo,
       });
       if (tarifa) {
-        throw new ConflictException('La terifa ya existe');
+        throw new ConflictException('La tarifa ya existe');
       }
       await this.tarifa.updateOne(
         { _id: new Types.ObjectId(id) },
@@ -81,7 +81,22 @@ export class TarifaService {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} tarifa`;
+  async softDelete(id: Types.ObjectId) {
+    try {
+      const tarifa = await this.tarifa.findOne({
+        _id: new Types.ObjectId(id),
+        flag: FlagE.nuevo,
+      });
+      if (!tarifa) {
+        throw new NotFoundException();
+      }
+      await this.tarifa.updateOne(
+        { _id: new Types.ObjectId(id) },
+        { flag: FlagE.eliminado },
+      );
+      return { status: HttpStatus.OK };
+    } catch (error) {
+      throw error;
+    }
   }
 }

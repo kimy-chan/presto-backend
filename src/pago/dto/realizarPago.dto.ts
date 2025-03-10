@@ -21,4 +21,6 @@ export class RealizarPago {
   observaciones: string;
 
   numeroPago: string;
+
+  usuario: Types.ObjectId;
 }

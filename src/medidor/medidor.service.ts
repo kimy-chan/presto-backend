@@ -199,6 +199,7 @@ export class MedidorService {
 
   async editar(id: Types.ObjectId, updateMedidorDto: UpdateMedidorDto) {
     const medidor = await this.medidor.findOne({
+      flag: FlagE.nuevo,
       numeroMedidor: updateMedidorDto.numeroMedidor,
       _id: { $ne: new Types.ObjectId(id) },
     });
@@ -352,7 +353,6 @@ export class MedidorService {
           $match: {
             flag: FlagE.nuevo,
             _id: new Types.ObjectId(medidor),
-            estado: EstadoMedidorE.activo,
           },
         },
         {

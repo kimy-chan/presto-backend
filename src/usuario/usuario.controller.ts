@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/createUsuario.dto';
@@ -14,6 +15,7 @@ import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 import { Types } from 'mongoose';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
+import { BuscadorUsuarioDto } from './dto/BuscadorUsuario.dto';
 
 @Controller('usuario')
 export class UsuarioController {
@@ -27,8 +29,8 @@ export class UsuarioController {
 
   @Get()
   @Permiso([PermisosE.LISTAR_USUARIO])
-  findAll() {
-    return this.usuarioService.listarUsuarios();
+  findAll(@Query() BuscadorUsuarioDto: BuscadorUsuarioDto) {
+    return this.usuarioService.listarUsuarios(BuscadorUsuarioDto);
   }
 
   @Get(':id')

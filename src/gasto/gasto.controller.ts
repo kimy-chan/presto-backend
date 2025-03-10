@@ -6,12 +6,16 @@ import {
   Patch,
   Param,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { GastoService } from './gasto.service';
 import { CreateGastoDto } from './dto/create-gasto.dto';
 import { UpdateGastoDto } from './dto/update-gasto.dto';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
+import { BuscadorGasto } from './dto/BuscarGasto.dto';
+import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
+import { Types } from 'mongoose';
 
 @Controller('gasto')
 export class GastoController {
@@ -25,22 +29,28 @@ export class GastoController {
 
   @Get()
   @Permiso([PermisosE.LISTAR_GASTO])
-  findAll() {
-    return this.gastoService.findAll();
+  listarGasto(@Query() buscadorGasto: BuscadorGasto) {
+    return this.gastoService.listarGasto(buscadorGasto);
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.gastoService.findOne(+id);
+  @Permiso([PermisosE.LISTAR_GASTO])
+  findOne(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.gastoService.findOne(id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateGastoDto: UpdateGastoDto) {
-    return this.gastoService.update(+id, updateGastoDto);
+  @Permiso([PermisosE.EDITAR_GASTO])
+  editarGasto(
+    @Param('id', ValidateIdPipe) id: Types.ObjectId,
+    @Body() updateGastoDto: UpdateGastoDto,
+  ) {
+    return this.gastoService.editarGasto(id, updateGastoDto);
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.gastoService.remove(+id);
+  @Permiso([PermisosE.ELIMINAR_GASTO])
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.gastoService.softDelete(id);
   }
 }

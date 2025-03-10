@@ -47,7 +47,8 @@ export class TarifaController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.tarifaService.remove(+id);
+  @Permiso([PermisosE.ELIMINAR_TARIFA])
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.tarifaService.softDelete(id);
   }
 }

@@ -12,6 +12,8 @@ import { Model, Types } from 'mongoose';
 import * as argon2 from 'argon2';
 import { FlagE } from 'src/core-app/enums/flag';
 import { Type } from 'class-transformer';
+import { BuscadorUsuarioDto } from './dto/BuscadorUsuario.dto';
+import { BuscadorUsuarioI } from './interface/buscadorUsuario';
 
 @Injectable()
 export class UsuarioService {
@@ -51,11 +53,47 @@ export class UsuarioService {
     await this.usuario.create(createUsuarioDto);
     return { status: HttpStatus.CREATED };
   }
-  async listarUsuarios() {
+
+  private buscadorUsuario(buscadorUsuarioDto: BuscadorUsuarioDto) {
+    const filter: BuscadorUsuarioI = {};
+    buscadorUsuarioDto.apellidoMaterno
+      ? (filter.apellidoMaterno = new RegExp(
+          buscadorUsuarioDto.apellidoMaterno,
+          'i',
+        ))
+      : filter;
+    buscadorUsuarioDto.apellidoPaterno
+      ? (filter.apellidoPaterno = new RegExp(
+          buscadorUsuarioDto.apellidoPaterno,
+          'i',
+        ))
+      : filter;
+    buscadorUsuarioDto.ci
+      ? (filter.ci = new RegExp(buscadorUsuarioDto.ci, 'i'))
+      : filter;
+    buscadorUsuarioDto.rol
+      ? (filter.rol = new Types.ObjectId(buscadorUsuarioDto.rol))
+      : filter;
+    buscadorUsuarioDto.nombre
+      ? (filter.nombre = new RegExp(buscadorUsuarioDto.nombre, 'i'))
+      : filter;
+    return filter;
+  }
+
+  async listarUsuarios(buscadorUsuarioDto: BuscadorUsuarioDto) {
+    const filter = this.buscadorUsuario(buscadorUsuarioDto);
+    const countDocuments = await this.usuario.countDocuments({
+      flag: FlagE.nuevo,
+      ...filter,
+    });
+    console.log(buscadorUsuarioDto);
+
+    const paginas = Math.ceil(countDocuments / buscadorUsuarioDto.limite);
     const usuarios = await this.usuario.aggregate([
       {
         $match: {
           flag: FlagE.nuevo,
+          ...filter,
         },
       },
       {
@@ -82,8 +120,14 @@ export class UsuarioService {
           rol: 1,
         },
       },
+      {
+        $limit: buscadorUsuarioDto.limite,
+      },
+      {
+        $skip: (buscadorUsuarioDto.pagina - 1) * buscadorUsuarioDto.limite,
+      },
     ]);
-    return usuarios;
+    return { status: HttpStatus.OK, data: usuarios, paginas: paginas };
   }
 
   async verificarUsuario(usuario: string) {

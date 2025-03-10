@@ -35,7 +35,7 @@ export class PagoService {
     private readonly medidorService: MedidorService,
   ) {}
 
-  async realizarPago(realizarPago: RealizarPago) {
+  async realizarPago(realizarPago: RealizarPago, usuario: Types.ObjectId) {
     const lectura = await this.lecturaService.lecturaFindOne(
       realizarPago.lectura,
     );
@@ -47,11 +47,12 @@ export class PagoService {
     }
     realizarPago.lectura = new Types.ObjectId(realizarPago.lectura);
     realizarPago.numeroPago = await this.numeroDePago();
+    realizarPago.usuario = new Types.ObjectId(usuario);
     const pago = await this.pago.create(realizarPago);
     const lecturaPagada = await this.lecturaService.cambiarEstadoLectura(
       realizarPago.lectura,
     );
-    if (pago && lecturaPagada.acknowledged == true) {
+    if (pago && lecturaPagada.modifiedCount > 0) {
       return { status: HttpStatus.CREATED, medidor: lectura.medidor };
     }
     throw new BadRequestException('Ocurrio un error');
@@ -164,6 +165,11 @@ export class PagoService {
         },
 
         {
+          $match: {
+            'lectura.flag': FlagE.nuevo,
+          },
+        },
+        {
           $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false },
         },
 
@@ -179,7 +185,11 @@ export class PagoService {
         {
           $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
         },
-
+        {
+          $match: {
+            'medidor.flag': FlagE.nuevo,
+          },
+        },
         ...(numeroMedidor
           ? [
               {
@@ -200,6 +210,11 @@ export class PagoService {
 
         {
           $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+        },
+        {
+          $match: {
+            'cliente.flag': FlagE.nuevo,
+          },
         },
         ...(ci
           ? [

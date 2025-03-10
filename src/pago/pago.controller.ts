@@ -6,6 +6,7 @@ import {
   Patch,
   Param,
   Query,
+  Req,
 } from '@nestjs/common';
 import { PagoService } from './pago.service';
 import { RealizarPago } from './dto/realizarPago.dto';
@@ -14,6 +15,7 @@ import { Types } from 'mongoose';
 import { BuscarPagoClienteDto } from './dto/BuscarPagoCliente.dto';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
+import { Request } from 'express';
 
 @Controller('pago')
 export class PagoController {
@@ -21,8 +23,8 @@ export class PagoController {
 
   @Post('realizar')
   @Permiso([PermisosE.CREAR_PAGO])
-  realizarPago(@Body() realizarPago: RealizarPago) {
-    return this.pagoService.realizarPago(realizarPago);
+  realizarPago(@Body() realizarPago: RealizarPago, @Req() request: Request) {
+    return this.pagoService.realizarPago(realizarPago, request.user);
   }
 
   @Get('cliente/:medidor')

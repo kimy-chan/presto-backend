@@ -85,4 +85,23 @@ export class RangoService {
       throw error;
     }
   }
+
+  async softDelete(id: Types.ObjectId) {
+    try {
+      const rango = await this.rango.findOne({
+        _id: new Types.ObjectId(id),
+        flag: FlagE.nuevo,
+      });
+      if (!rango) {
+        throw new NotFoundException();
+      }
+      await this.rango.updateOne(
+        { _id: new Types.ObjectId(id) },
+        { flag: FlagE.eliminado },
+      );
+      return { status: HttpStatus.OK };
+    } catch (error) {
+      throw error;
+    }
+  }
 }

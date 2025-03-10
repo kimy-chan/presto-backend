@@ -40,4 +40,10 @@ export class RangoController {
 
     return this.rangoService.editarRango(id, editarRangoDto);
   }
+
+  @Delete(':id')
+  @Permiso([PermisosE.ELIMINAR_TARIFA])
+  softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.rangoService.softDelete(id);
+  }
 }

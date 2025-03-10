@@ -10,12 +10,15 @@ export class BuscadorUsuarioDto extends PaginadorDto {
   @IsString()
   @IsOptional()
   nombre: string;
+
   @IsString()
   @IsOptional()
   apellidoMaterno: string;
+
   @IsString()
   @IsOptional()
   apellidoPaterno: string;
+
   @IsMongoId()
   @IsOptional()
   rol: Types.ObjectId;
