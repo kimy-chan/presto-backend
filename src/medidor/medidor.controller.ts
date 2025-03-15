@@ -17,6 +17,7 @@ import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
 import { PublicInterno } from 'src/autenticacion/decorators/PublicInterno';
+import { PaginadorDto } from 'src/core-app/dto/Paginador.dto';
 
 @Controller('medidor')
 export class MedidorController {
@@ -67,5 +68,17 @@ export class MedidorController {
   @PublicInterno()
   medidorCliente(@Param('cliente', ValidateIdPipe) cliente: Types.ObjectId) {
     return this.medidorService.medidorCliente(cliente);
+  }
+
+  @Get('tres/lecturas/pendientes')
+  @Permiso([PermisosE.LISTAR_MEDIDOR])
+  listarMedidorConTresLecturas(@Query() paginadorDto: PaginadorDto) {
+    return this.medidorService.listarMedidorConTresLecturas(paginadorDto);
+  }
+
+  @Patch('corte/:id')
+  @Permiso([PermisosE.EDITAR_MEDIDOR])
+  realizarCorteMedidor(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
+    return this.medidorService.realizarCorteMedidor(id);
   }
 }

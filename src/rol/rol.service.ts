@@ -67,8 +67,18 @@ export class RolService {
       _id: new Types.ObjectId(id),
       flag: FlagE.nuevo,
     });
+
     if (!rol) {
       throw new NotFoundException('El rol no existe');
+    }
+
+    const rolExiste = await this.rol.findOne({
+      _id: { $ne: new Types.ObjectId(id) },
+      nombre: updateRolDto.nombre,
+      flag: FlagE.nuevo,
+    });
+    if (rolExiste) {
+      throw new ConflictException('El rol ya existe');
     }
     await this.rol.updateOne({ _id: new Types.ObjectId(id) }, updateRolDto);
     return { status: HttpStatus.OK };

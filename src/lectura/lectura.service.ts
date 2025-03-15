@@ -228,25 +228,9 @@ export class LecturaService {
           : []),
 
         {
-          $lookup: {
-            from: 'Cliente',
-            foreignField: '_id',
-            localField: 'medidor.cliente',
-            as: 'cliente',
-          },
-        },
-
-        {
-          $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
-        },
-
-        {
           $project: {
             _id: 1,
-            ci: '$cliente.ci',
-            nombre: '$cliente.nombre',
-            apellidoPaterno: '$cliente.apellidoPaterno',
-            apellidoMaterno: '$cliente.apellidoMaterno',
+
             numeroMedidor: '$medidor.numeroMedidor',
             estadoMedidor: '$medidor.estado',
             lecturaActual: 1,
@@ -313,18 +297,10 @@ export class LecturaService {
     return { status: HttpStatus.OK, data: lectura };
   }
 
-  update(id: number, updateLecturaDto: UpdateLecturaDto) {
-    return `This action updates a #${id} lectura`;
-  }
-
-  remove(id: number) {
-    return `This action removes a #${id} lectura`;
-  }
   private async calcularTarifa(consumoTotal: number, tarifa: Types.ObjectId) {
     const rangos = await this.rangoService.tarifaRangoMedidor(tarifa);
-    console.log(rangos);
-
-    let consumo = consumoTotal; // lectura actual
+    rangos.sort((a, b) => a.rango1 - b.rango2);
+    let consumo = consumoTotal <= 0 ? 1 : consumoTotal;
     let costoTotal = 0;
 
     for (const rango of rangos) {

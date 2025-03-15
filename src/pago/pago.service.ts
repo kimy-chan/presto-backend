@@ -97,6 +97,12 @@ export class PagoService {
             consumoTotal: '$lectura.consumoTotal',
             costoPagado: 1,
             observaciones: 1,
+            fecha: {
+              $dateToString: {
+                format: '%Y/%m/%d',
+                date: '$fecha',
+              },
+            },
           },
         },
       ]),

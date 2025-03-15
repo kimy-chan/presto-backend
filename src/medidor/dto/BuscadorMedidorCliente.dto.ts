@@ -1,6 +1,7 @@
 import { Transform } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsEnum, IsOptional, IsString } from 'class-validator';
 import { PaginadorDto } from 'src/core-app/dto/Paginador.dto';
+import { EstadoMedidorE } from '../enums/estados';
 
 export class BuscadorMedidorClienteDto extends PaginadorDto {
   @IsString()
@@ -19,8 +20,13 @@ export class BuscadorMedidorClienteDto extends PaginadorDto {
   @IsOptional()
   @Transform(({ value }: { value: string }) => value.trim())
   apellidoMaterno: string;
+
   @IsString()
   @IsOptional()
   @Transform(({ value }: { value: string }) => value.trim())
   numeroMedidor: string;
+
+  @IsEnum(EstadoMedidorE)
+  @IsOptional()
+  estado: string;
 }

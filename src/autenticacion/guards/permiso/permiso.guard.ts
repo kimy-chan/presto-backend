@@ -36,8 +36,6 @@ export class PermisoGuard implements CanActivate {
       );
 
       if (publicoInterno) {
-        console.log('ha', publicoInterno);
-
         return true;
       }
 

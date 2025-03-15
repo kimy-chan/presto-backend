@@ -1,3 +1,5 @@
+import { EstadoMedidorE } from '../enums/estados';
+
 export interface BuscadorMedidorClienteI {
   ci?: RegExp;
 
@@ -8,4 +10,6 @@ export interface BuscadorMedidorClienteI {
   apellidoMaterno?: RegExp;
 
   numeroMedidor?: string;
+
+  estado?: string;
 }

@@ -19,6 +19,9 @@ import { DataMedidorI } from './interface/dataMedidor';
 import { DataMedidorCliente } from './interface/dataMedidorCliente';
 import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 import { BuscadorMedidorClienteI } from './interface/buscadorMedidorCliente';
+import { EstadoLecturaE } from 'src/lectura/enums/estadoLectura';
+import { PaginadorDto } from 'src/core-app/dto/Paginador.dto';
+import { EstadoPagoE } from 'src/pago/enum/estadoE';
 
 @Injectable()
 export class MedidorService {
@@ -72,19 +75,30 @@ export class MedidorService {
     buscadorMedidorClienteDto.numeroMedidor
       ? (filter.numeroMedidor = buscadorMedidorClienteDto.numeroMedidor)
       : filter;
+
+    buscadorMedidorClienteDto.estado
+      ? (filter.estado = buscadorMedidorClienteDto.estado)
+      : filter;
     return filter;
   }
   async listarMedidorCliente(
     buscadorMedidorClienteDto: BuscadorMedidorClienteDto,
   ) {
-    const { numeroMedidor, apellidoMaterno, apellidoPaterno, ci, nombre } =
-      this.filtradorMedidorCliente(buscadorMedidorClienteDto);
+    const {
+      numeroMedidor,
+      apellidoMaterno,
+      apellidoPaterno,
+      ci,
+      nombre,
+      estado,
+    } = this.filtradorMedidorCliente(buscadorMedidorClienteDto);
 
     const medidores = await this.medidor.aggregate([
       {
         $match: {
           flag: FlagE.nuevo,
           ...(numeroMedidor ? { numeroMedidor: numeroMedidor } : {}),
+          ...(estado ? { estado: estado } : {}),
         },
       },
       {
@@ -378,5 +392,109 @@ export class MedidorService {
         },
       ]);
     return dataMedidorCliente[0];
+  }
+
+  async listarMedidorConTresLecturas(paginadorDto: PaginadorDto) {
+    try {
+      const medidores = await this.medidor.aggregate([
+        {
+          $match: {
+            flag: FlagE.nuevo,
+            estado: EstadoMedidorE.activo,
+          },
+        },
+
+        {
+          $lookup: {
+            from: 'Lectura',
+            foreignField: 'medidor',
+            localField: '_id',
+            as: 'lectura',
+          },
+        },
+
+        { $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false } },
+
+        {
+          $match: {
+            'lectura.estado': EstadoLecturaE.PENDIENTE,
+          },
+        },
+        {
+          $group: {
+            _id: '$_id',
+            numeroMedidor: { $first: '$numeroMedidor' },
+            codigo: { $first: '$codigo' },
+            estado: { $first: '$estado' },
+            direccion: { $first: '$direccion' },
+            lecturas: { $push: '$lectura' },
+          },
+        },
+        {
+          $match: {
+            $expr: { $gte: [{ $size: '$lecturas' }, 3] },
+          },
+        },
+        {
+          $project: {
+            numeroMedidor: 1,
+            estado: 1,
+            lecturas: 1,
+            direccion: 1,
+            codigo: 1,
+          },
+        },
+        {
+          $facet: {
+            data: [
+              {
+                $limit: paginadorDto.limite,
+              },
+              {
+                $skip: (paginadorDto.pagina - 1) * paginadorDto.limite,
+              },
+            ],
+            countDocuments: [
+              {
+                $count: 'total',
+              },
+            ],
+          },
+        },
+      ]);
+      console.log(medidores[0]);
+
+      const cantidadItems = medidores[0].countDocuments[0]
+        ? medidores[0].countDocuments[0].total
+        : 1;
+      const paginas = Math.ceil(cantidadItems / paginadorDto.limite);
+      return {
+        status: HttpStatus.OK,
+        data: medidores[0].data,
+        paginas: paginas,
+      };
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  async realizarCorteMedidor(id: Types.ObjectId) {
+    try {
+      const medidor = await this.medidor.findOne({
+        _id: new Types.ObjectId(id),
+        estado: EstadoMedidorE.activo,
+        flag: FlagE.nuevo,
+      });
+      if (!medidor) {
+        throw new NotFoundException();
+      }
+      await this.medidor.updateMany(
+        { _id: new Types.ObjectId(id) },
+        { estado: EstadoMedidorE.inactivo },
+      );
+      return { status: HttpStatus.OK };
+    } catch (error) {
+      throw error;
+    }
   }
 }
