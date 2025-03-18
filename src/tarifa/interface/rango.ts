@@ -1,13 +1,13 @@
-import { Types } from "mongoose";
+import { Types } from 'mongoose';
 
-export interface RangoI{
+export interface RangoI {
+  rango1: number;
 
-      rango1: number;
+  rango2: number;
 
-      rango2: number;
-    
+  costo: number;
 
-      costo: number;
-    
-      tarifa:Types.ObjectId
+  tarifa: Types.ObjectId;
+
+  iva: number;
 }

@@ -134,8 +134,12 @@ export class PagoService {
 
     buscadorClienteDto.fechaInicio && buscadorClienteDto.fechaFin
       ? (filter.fecha = {
-          $gte: new Date(buscadorClienteDto.fechaInicio),
-          $lte: new Date(buscadorClienteDto.fechaFin),
+          $gte: new Date(
+            new Date(buscadorClienteDto.fechaInicio).setUTCHours(0, 0, 0, 0),
+          ),
+          $lte: new Date(
+            new Date(buscadorClienteDto.fechaFin).setUTCHours(23, 59, 39, 999),
+          ),
         })
       : filter;
 

@@ -22,7 +22,7 @@ export class CategoriaGastoService {
     const countDocuments = await this.categoriaGasto.countDocuments({
       flag: FlagE.nuevo,
     });
-    const paginas = Math.ceil(paginadorDto.limite / countDocuments);
+    const paginas = Math.ceil(countDocuments / paginadorDto.limite);
     const categorias = await this.categoriaGasto
       .find({ flag: FlagE.nuevo })
       .skip((paginadorDto.pagina - 1) * paginadorDto.limite)

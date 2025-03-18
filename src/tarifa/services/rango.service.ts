@@ -13,6 +13,7 @@ import { EditarRangoDto } from '../dto/EditarRango.dto';
 @Injectable()
 export class RangoService {
   constructor(@InjectModel(Rango.name) private readonly rango: Model<Rango>) {}
+
   async create(rango: RangoI) {
     await this.rango.create(rango);
     return;
@@ -39,6 +40,7 @@ export class RangoService {
           rango1: 1,
           rango2: 1,
           costo: 1,
+          iva: 1,
           tarifa: '$tarifa.nombre',
         },
       },

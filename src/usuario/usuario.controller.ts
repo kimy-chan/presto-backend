@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Req,
 } from '@nestjs/common';
 import { UsuarioService } from './usuario.service';
 import { CreateUsuarioDto } from './dto/createUsuario.dto';
@@ -16,6 +17,8 @@ import { Types } from 'mongoose';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
 import { BuscadorUsuarioDto } from './dto/BuscadorUsuario.dto';
+import { PublicInterno } from 'src/autenticacion/decorators/PublicInterno';
+import { Request } from 'express';
 
 @Controller('usuario')
 export class UsuarioController {
@@ -52,5 +55,10 @@ export class UsuarioController {
   @Permiso([PermisosE.EDITAR_MEDIDOR])
   softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
     return this.usuarioService.softDelete(id);
+  }
+  @Get('perfil/cuenta')
+  @PublicInterno()
+  perfilUsuario(@Req() request: Request) {
+    return this.usuarioService.perfilUsuario(request.user);
   }
 }

@@ -204,4 +204,40 @@ export class UsuarioService {
     );
     return { status: HttpStatus.OK };
   }
+
+  async perfilUsuario(id: Types.ObjectId) {
+    const usuario = await this.usuario.aggregate([
+      {
+        $match: {
+          _id: new Types.ObjectId(id),
+          flag: FlagE.nuevo,
+        },
+      },
+      {
+        $lookup: {
+          from: 'Rol',
+          foreignField: '_id',
+          localField: 'rol',
+          as: 'rol',
+        },
+      },
+      {
+        $unwind: { path: '$rol', preserveNullAndEmptyArrays: false },
+      },
+      {
+        $project: {
+          ci: 1,
+          nombre: 1,
+          apellidoPaterno: 1,
+          apellidoMaterno: 1,
+          usuario: 1,
+          direccion: 1,
+          celular: 1,
+          rolNombre: '$rol.nombre',
+          rol: 1,
+        },
+      },
+    ]);
+    return { status: HttpStatus.OK, data: usuario[0] };
+  }
 }

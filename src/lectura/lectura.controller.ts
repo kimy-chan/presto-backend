@@ -59,10 +59,13 @@ export class LecturaController {
     return this.lecturaService.softDelete(id);
   }
 
-  @Get('recibo/:id')
+  @Get('recibo/:medidor/:lectura')
   @Permiso([PermisosE.LISTAR_LECTURA])
-  reciboLectura(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
-    return this.lecturaService.reciboLectura(id);
+  reciboLectura(
+    @Param('medidor', ValidateIdPipe) medidor: Types.ObjectId,
+    @Param('lectura', ValidateIdPipe) lectura: Types.ObjectId,
+  ) {
+    return this.lecturaService.reciboLectura(medidor, lectura);
   }
   @Get('medidor/:medidor')
   @PublicInterno()

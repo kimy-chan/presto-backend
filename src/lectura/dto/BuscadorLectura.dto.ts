@@ -11,7 +11,7 @@ export class BuscadorLecturaDto extends PaginadorDto {
   @IsString()
   @IsOptional()
   @Transform(({ value }: { value: string }) => value.trim().toUpperCase())
-  mes: string;
+  estado: string;
 
   @IsDateString()
   @IsOptional()

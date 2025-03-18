@@ -8,4 +8,6 @@ export interface DataMedidorCliente {
   apellidoPaterno: string;
   apellidoMaterno: string;
   direccion: string;
+
+  tarifaNombre?: string;
 }

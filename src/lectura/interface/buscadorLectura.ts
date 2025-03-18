@@ -1,7 +1,7 @@
 export interface BuscadorLecturaI {
   numeroMedidor?: string;
 
-  mes?: string;
+  estado?: string;
 
   fecha?: {
     $gte: Date;

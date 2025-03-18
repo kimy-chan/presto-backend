@@ -35,6 +35,7 @@ export class TarifaService {
         rango1: rango.rango1,
         rango2: rango.rango2,
         tarifa: tarifa._id,
+        iva: rango.iva,
       };
       await this.rangoService.create(data);
     }

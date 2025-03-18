@@ -319,10 +319,9 @@ export class MedidorService {
     return dataM[0];
   }
 
-  async buscarMedidorActivo(medidor: Types.ObjectId) {
+  async buscarMedidorPorId(medidor: Types.ObjectId) {
     const data = await this.medidor.findOne({
       flag: FlagE.nuevo,
-      estado: EstadoMedidorE.activo,
       _id: new Types.ObjectId(medidor),
     });
     return data;
@@ -496,5 +495,55 @@ export class MedidorService {
     } catch (error) {
       throw error;
     }
+  }
+
+  async listarUnMedidorConSuTarifa(
+    medidorId: Types.ObjectId,
+  ): Promise<DataMedidorCliente> {
+    const medidor = await this.medidor.aggregate([
+      {
+        $match: {
+          _id: new Types.ObjectId(medidorId),
+          flag: FlagE.nuevo,
+        },
+      },
+      {
+        $lookup: {
+          from: 'Tarifa',
+          foreignField: '_id',
+          localField: 'tarifa',
+          as: 'tarifa',
+        },
+      },
+      {
+        $unwind: { path: '$tarifa', preserveNullAndEmptyArrays: false },
+      },
+
+      {
+        $lookup: {
+          from: 'Cliente',
+          foreignField: '_id',
+          localField: 'cliente',
+          as: 'cliente',
+        },
+      },
+      {
+        $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+      },
+      {
+        $project: {
+          nombre: '$cliente.nombre',
+          ci: '$cliente.ci',
+          codigoCliente: '$cliente.codigo',
+          apellidoPaterno: '$cliente.apellidoPaterno',
+          apellidoMaterno: '$cliente.apellidoMaterno',
+          tarifaNombre: '$tarifa.nombre',
+          numeroMedidor: 1,
+          direccion: 1,
+        },
+      },
+    ]);
+
+    return medidor[0];
   }
 }
