@@ -290,20 +290,32 @@ export class LecturaService {
   private async calcularTarifa(consumoTotal: number, tarifa: Types.ObjectId) {
     const rangos = await this.rangoService.tarifaRangoMedidor(tarifa);
     rangos.sort((a, b) => a.rango1 - b.rango2);
-    let total = 0;
-    let contador = 0;
-    for (const rango of rangos) {
-      contador++;
-      if (consumoTotal >= rango.rango1 && consumoTotal <= rango.rango2) {
-        if (contador == 1) {
-          total = rango.costo;
+    let total: number = 0;
+    console.log(rangos.length);
+
+    for (let i = 0; i < rangos.length; i++) {
+      const iva: number = rangos[i].iva / 100;
+
+      if (
+        consumoTotal >= rangos[i].rango1 &&
+        consumoTotal <= rangos[i].rango2
+      ) {
+        if (i == 0) {
+          const costoIva = parseFloat((rangos[i].costo * iva).toFixed(1));
+          total = rangos[i].costo + costoIva;
         } else {
-          total = consumoTotal * rango.costo;
+          const costo = consumoTotal * rangos[i].costo;
+          const costoIva = parseFloat((costo * iva).toFixed(1));
+          total = costo + costoIva;
         }
-      } else if (contador == rangos.length) {
-        total = consumoTotal * rango.costo;
+        return total;
       }
     }
+
+    const iva: number = rangos[rangos.length - 1].iva / 100;
+    const costo = consumoTotal * rangos[rangos.length - 1].costo;
+    const costoIva = parseFloat((costo * iva).toFixed(1));
+    total = costo + costoIva;
     return total;
   }
 
