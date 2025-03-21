@@ -171,6 +171,7 @@ export class LecturaService {
   }
   async listarLecturas(buscadorLecturaDto: BuscadorLecturaDto) {
     const { numeroMedidor, ...filter } = this.filterLectura(buscadorLecturaDto);
+    console.log(buscadorLecturaDto);
 
     try {
       const lectura = await this.lectura.aggregate([
@@ -236,11 +237,11 @@ export class LecturaService {
           $facet: {
             data: [
               {
-                $limit: buscadorLecturaDto.limite,
-              },
-              {
                 $skip:
                   (buscadorLecturaDto.pagina - 1) * buscadorLecturaDto.limite,
+              },
+              {
+                $limit: buscadorLecturaDto.limite,
               },
             ],
             countDocuments: [
@@ -311,7 +312,6 @@ export class LecturaService {
         return total;
       }
     }
-
     const iva: number = rangos[rangos.length - 1].iva / 100;
     const costo = consumoTotal * rangos[rangos.length - 1].costo;
     const costoIva = parseFloat((costo * iva).toFixed(1));

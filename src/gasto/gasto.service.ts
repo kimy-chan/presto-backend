@@ -81,11 +81,10 @@ export class GastoService {
         },
       },
       {
-        $limit: buscadorGasto.limite,
-      },
-
-      {
         $skip: (buscadorGasto.pagina - 1) * buscadorGasto.limite,
+      },
+      {
+        $limit: buscadorGasto.limite,
       },
     ]);
 

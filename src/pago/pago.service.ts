@@ -311,11 +311,11 @@ export class PagoService {
           $facet: {
             data: [
               {
-                $limit: buscadorClienteDto.limite,
-              },
-              {
                 $skip:
                   (buscadorClienteDto.pagina - 1) * buscadorClienteDto.limite,
+              },
+              {
+                $limit: buscadorClienteDto.limite,
               },
             ],
             documentos: [

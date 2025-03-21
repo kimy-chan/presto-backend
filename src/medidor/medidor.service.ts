@@ -179,12 +179,12 @@ export class MedidorService {
         $facet: {
           data: [
             {
-              $limit: buscadorMedidorClienteDto.limite,
-            },
-            {
               $skip:
                 (buscadorMedidorClienteDto.pagina - 1) *
                 buscadorMedidorClienteDto.limite,
+            },
+            {
+              $limit: buscadorMedidorClienteDto.limite,
             },
           ],
           countDocuments: [
@@ -447,10 +447,10 @@ export class MedidorService {
           $facet: {
             data: [
               {
-                $limit: paginadorDto.limite,
+                $skip: (paginadorDto.pagina - 1) * paginadorDto.limite,
               },
               {
-                $skip: (paginadorDto.pagina - 1) * paginadorDto.limite,
+                $limit: paginadorDto.limite,
               },
             ],
             countDocuments: [
@@ -461,7 +461,6 @@ export class MedidorService {
           },
         },
       ]);
-      console.log(medidores[0]);
 
       const cantidadItems = medidores[0].countDocuments[0]
         ? medidores[0].countDocuments[0].total
