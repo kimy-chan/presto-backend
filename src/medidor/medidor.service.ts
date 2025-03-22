@@ -200,6 +200,8 @@ export class MedidorService {
       ? medidores[0].countDocuments[0].total
       : 1;
     const paginas = Math.ceil(cantidadItems / buscadorMedidorClienteDto.limite);
+    console.log(cantidadItems);
+
     return { status: HttpStatus.OK, data: medidores[0].data, paginas: paginas };
   }
 
@@ -394,6 +396,8 @@ export class MedidorService {
   }
 
   async listarMedidorConTresLecturas(paginadorDto: PaginadorDto) {
+    console.log(paginadorDto.limite);
+
     try {
       const medidores = await this.medidor.aggregate([
         {

@@ -1,7 +1,9 @@
-import { IsNotEmpty, IsString } from "class-validator";
+import { Transform } from 'class-transformer';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CreateCategoriaGastoDto {
-    @IsString()
-    @IsNotEmpty()
-    nombre:string
+  @IsString()
+  @IsNotEmpty()
+  @Transform(({ value }: { value: string }) => value.trim())
+  nombre: string;
 }
