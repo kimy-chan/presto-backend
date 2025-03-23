@@ -7,6 +7,7 @@ import {
   Param,
   Query,
   Req,
+  Res,
 } from '@nestjs/common';
 import { PagoService } from './pago.service';
 import { RealizarPago } from './dto/realizarPago.dto';
@@ -15,7 +16,8 @@ import { Types } from 'mongoose';
 import { BuscarPagoClienteDto } from './dto/BuscarPagoCliente.dto';
 import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
-import { Request } from 'express';
+import { Request, Response, response } from 'express';
+import { PublicInterno } from 'src/autenticacion/decorators/PublicInterno';
 
 @Controller('pago')
 export class PagoController {
@@ -37,5 +39,25 @@ export class PagoController {
   @Get('listar')
   listarPagos(@Query() buscadorClienteDto: BuscarPagoClienteDto) {
     return this.pagoService.listarPagos(buscadorClienteDto);
+  }
+
+  @PublicInterno()
+  @Get('descargar/excel')
+  async descargarExcelPago(
+    @Query() buscadorClienteDto: BuscarPagoClienteDto,
+    @Res() response: Response,
+  ) {
+    const workbook =
+      await this.pagoService.descargarExcelPago(buscadorClienteDto);
+    response.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="export.xlsx"',
+    );
+    await workbook.xlsx.write(response);
+    return response.end();
   }
 }

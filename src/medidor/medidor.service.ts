@@ -396,8 +396,6 @@ export class MedidorService {
   }
 
   async listarMedidorConTresLecturas(paginadorDto: PaginadorDto) {
-    console.log(paginadorDto.limite);
-
     try {
       const medidores = await this.medidor.aggregate([
         {
