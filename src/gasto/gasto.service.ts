@@ -3,7 +3,7 @@ import { CreateGastoDto } from './dto/create-gasto.dto';
 import { UpdateGastoDto } from './dto/update-gasto.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Gasto } from './schema/gasto.schema';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { BuscadorGasto } from './dto/BuscarGasto.dto';
 import * as ExcelJS from 'exceljs';
@@ -133,7 +133,7 @@ export class GastoService {
   private async obtenerPagos(buscadorGasto: BuscadorGasto, paginador: boolean) {
     const filter = await this.buscadorGasto(buscadorGasto);
 
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       {
         $match: { flag: FlagE.nuevo, ...filter },
       },

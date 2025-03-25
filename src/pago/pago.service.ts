@@ -6,7 +6,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 
 import { InjectModel } from '@nestjs/mongoose';
 import { Pago } from './schemas/pago.schema';
@@ -220,7 +220,7 @@ export class PagoService {
       numeroMedidor,
     } = this.buscadorPagosCliente(buscadorClienteDto);
 
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       {
         $match: {
           flag: FlagE.nuevo,

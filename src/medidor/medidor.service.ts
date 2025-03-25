@@ -11,7 +11,7 @@ import { CreateMedidorDto } from './dto/create-medidor.dto';
 import { UpdateMedidorDto } from './dto/update-medidor.dto';
 import { InjectModel } from '@nestjs/mongoose';
 import { Medidor } from './schema/medidor.schema';
-import { Model, Types } from 'mongoose';
+import { Model, PipelineStage, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { EstadoMedidorE } from './enums/estados';
 import { LecturaService } from 'src/lectura/lectura.service';
@@ -531,7 +531,7 @@ export class MedidorService {
     paginadorDto: PaginadorDto,
     paginador: boolean,
   ) {
-    const pipeline: any[] = [
+    const pipeline: PipelineStage[] = [
       {
         $match: {
           flag: FlagE.nuevo,
