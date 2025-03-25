@@ -21,7 +21,7 @@ import { BuscadorMedidorClienteDto } from './dto/BuscadorMedidorCliente.dto';
 import { BuscadorMedidorClienteI } from './interface/buscadorMedidorCliente';
 import { EstadoLecturaE } from 'src/lectura/enums/estadoLectura';
 import { PaginadorDto } from 'src/core-app/dto/Paginador.dto';
-import { EstadoPagoE } from 'src/pago/enum/estadoE';
+import * as ExcelJS from 'exceljs';
 
 @Injectable()
 export class MedidorService {
@@ -173,7 +173,7 @@ export class MedidorService {
         },
       },
       {
-        $sort: { fecha: -1 },
+        $sort: { codigo: -1 },
       },
       {
         $facet: {
@@ -397,72 +397,10 @@ export class MedidorService {
 
   async listarMedidorConTresLecturas(paginadorDto: PaginadorDto) {
     try {
-      const medidores = await this.medidor.aggregate([
-        {
-          $match: {
-            flag: FlagE.nuevo,
-            estado: EstadoMedidorE.activo,
-          },
-        },
-
-        {
-          $lookup: {
-            from: 'Lectura',
-            foreignField: 'medidor',
-            localField: '_id',
-            as: 'lectura',
-          },
-        },
-
-        { $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false } },
-
-        {
-          $match: {
-            'lectura.estado': EstadoLecturaE.PENDIENTE,
-          },
-        },
-        {
-          $group: {
-            _id: '$_id',
-            numeroMedidor: { $first: '$numeroMedidor' },
-            codigo: { $first: '$codigo' },
-            estado: { $first: '$estado' },
-            direccion: { $first: '$direccion' },
-            lecturas: { $push: '$lectura' },
-          },
-        },
-        {
-          $match: {
-            $expr: { $gte: [{ $size: '$lecturas' }, 3] },
-          },
-        },
-        {
-          $project: {
-            numeroMedidor: 1,
-            estado: 1,
-            lecturas: 1,
-            direccion: 1,
-            codigo: 1,
-          },
-        },
-        {
-          $facet: {
-            data: [
-              {
-                $skip: (paginadorDto.pagina - 1) * paginadorDto.limite,
-              },
-              {
-                $limit: paginadorDto.limite,
-              },
-            ],
-            countDocuments: [
-              {
-                $count: 'total',
-              },
-            ],
-          },
-        },
-      ]);
+      const medidores = await this.obtenerMedidoresConTresLecturas(
+        paginadorDto,
+        true,
+      );
 
       const cantidadItems = medidores[0].countDocuments[0]
         ? medidores[0].countDocuments[0].total
@@ -546,5 +484,121 @@ export class MedidorService {
     ]);
 
     return medidor[0];
+  }
+
+  async descargarExcelMedidorConTresLecturas(paginadorDto: PaginadorDto) {
+    const medidores = await this.obtenerMedidoresConTresLecturas(
+      paginadorDto,
+      false,
+    );
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('hoja 1');
+    worksheet.columns = [
+      {
+        header: 'codigo Medidor',
+        key: 'codigoMedidor',
+      },
+      {
+        header: 'numero medidor',
+        key: 'numeroMedidor',
+      },
+      {
+        header: 'estado',
+        key: 'estado',
+      },
+      {
+        header: 'direccion',
+        key: 'direccion',
+      },
+      {
+        header: 'lecturas pedientes de pago',
+        key: 'lecturas',
+      },
+    ];
+    for (const medidor of medidores) {
+      worksheet.addRow({
+        codigoMedidor: medidor.codigo,
+        numeroMedidor: medidor.numeroMedidor,
+        estado: medidor.estado,
+        direccion: medidor.direccion,
+        lecturas: medidor.lecturas.length,
+      });
+    }
+    return workbook;
+  }
+
+  private async obtenerMedidoresConTresLecturas(
+    paginadorDto: PaginadorDto,
+    paginador: boolean,
+  ) {
+    const pipeline: any[] = [
+      {
+        $match: {
+          flag: FlagE.nuevo,
+          estado: EstadoMedidorE.activo,
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'Lectura',
+          foreignField: 'medidor',
+          localField: '_id',
+          as: 'lectura',
+        },
+      },
+
+      { $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false } },
+
+      {
+        $match: {
+          'lectura.estado': EstadoLecturaE.PENDIENTE,
+        },
+      },
+      {
+        $group: {
+          _id: '$_id',
+          numeroMedidor: { $first: '$numeroMedidor' },
+          codigo: { $first: '$codigo' },
+          estado: { $first: '$estado' },
+          direccion: { $first: '$direccion' },
+          lecturas: { $push: '$lectura' },
+        },
+      },
+      {
+        $match: {
+          $expr: { $gte: [{ $size: '$lecturas' }, 3] },
+        },
+      },
+      {
+        $project: {
+          numeroMedidor: 1,
+          estado: 1,
+          lecturas: 1,
+          direccion: 1,
+          codigo: 1,
+        },
+      },
+    ];
+    if (paginador) {
+      pipeline.push({
+        $facet: {
+          data: [
+            {
+              $skip: (paginadorDto.pagina - 1) * paginadorDto.limite,
+            },
+            {
+              $limit: paginadorDto.limite,
+            },
+          ],
+          countDocuments: [
+            {
+              $count: 'total',
+            },
+          ],
+        },
+      });
+    }
+    return await this.medidor.aggregate(pipeline);
   }
 }

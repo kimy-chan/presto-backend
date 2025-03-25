@@ -49,7 +49,7 @@ export class PagoController {
   ) {
     const workbook =
       await this.pagoService.descargarExcelPago(buscadorClienteDto);
-    response.setHeader(
+      response.setHeader(
       'Content-Type',
       'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     );

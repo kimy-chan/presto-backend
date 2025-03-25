@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Res,
 } from '@nestjs/common';
 import { GastoService } from './gasto.service';
 import { CreateGastoDto } from './dto/create-gasto.dto';
@@ -16,6 +17,7 @@ import { PermisosE } from 'src/core-app/enums/permisos';
 import { BuscadorGasto } from './dto/BuscarGasto.dto';
 import { ValidateIdPipe } from 'src/core-app/util/validate-id/validate-id.pipe';
 import { Types } from 'mongoose';
+import { Response } from 'express';
 
 @Controller('gasto')
 export class GastoController {
@@ -52,5 +54,24 @@ export class GastoController {
   @Permiso([PermisosE.ELIMINAR_GASTO])
   softDelete(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
     return this.gastoService.softDelete(id);
+  }
+
+  @Get('descargar/Excel')
+  @Permiso([PermisosE.LISTAR_GASTO])
+  async descargarGastoExcel(
+    @Query() buscadorGasto: BuscadorGasto,
+    @Res() response: Response,
+  ) {
+    const workbook = await this.gastoService.descargarGastoExcel(buscadorGasto);
+    response.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="export.xlsx"',
+    );
+    await workbook.xlsx.write(response);
+    return response.end();
   }
 }

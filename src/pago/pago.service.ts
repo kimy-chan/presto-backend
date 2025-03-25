@@ -5,12 +5,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { CreatePagoDto } from './dto/create-pago.dto';
-import { UpdatePagoDto } from './dto/update-pago.dto';
+
 import { Model, Types } from 'mongoose';
-import { LecturaI } from 'src/lectura/interface/lectura';
-import { DataLecturaI } from 'src/lectura/interface/dataLectura';
-import { RangoService } from 'src/tarifa/services/rango.service';
+
 import { InjectModel } from '@nestjs/mongoose';
 import { Pago } from './schemas/pago.schema';
 import { PagoI, PagosI } from './interface/pago';
@@ -18,13 +15,13 @@ import { BuscarPagoDto } from './dto/buscarPago.dto';
 import { FlagE } from 'src/core-app/enums/flag';
 import { RealizarPago } from './dto/realizarPago.dto';
 import { LecturaService } from 'src/lectura/lectura.service';
-import { ClienteService } from 'src/cliente/cliente.service';
+
 import { MedidorService } from 'src/medidor/medidor.service';
-import { format } from 'path';
-import { BuscadorClienteDto } from 'src/cliente/dto/BuscadorCliente.dto';
+
 import { BuscadorPagosClienteI } from './interface/buscadorPagoCliente';
 import { BuscarPagoClienteDto } from './dto/BuscarPagoCliente.dto';
 import * as ExcelJS from 'exceljs';
+import { pipe } from 'rxjs';
 
 @Injectable()
 export class PagoService {
@@ -146,185 +143,8 @@ export class PagoService {
   }
 
   async listarPagos(buscadorClienteDto: BuscarPagoClienteDto) {
-    const {
-      apellidoMaterno,
-      apellidoPaterno,
-      ci,
-      fecha,
-      nombre,
-      numeroMedidor,
-    } = this.buscadorPagosCliente(buscadorClienteDto);
-
     try {
-      const pagos = await this.pago.aggregate([
-        {
-          $match: {
-            flag: FlagE.nuevo,
-            ...(fecha ? { fecha: fecha } : {}),
-          },
-        },
-
-        {
-          $lookup: {
-            from: 'Lectura',
-            foreignField: '_id',
-            localField: 'lectura',
-            as: 'lectura',
-          },
-        },
-
-        {
-          $match: {
-            'lectura.flag': FlagE.nuevo,
-          },
-        },
-        {
-          $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false },
-        },
-
-        {
-          $lookup: {
-            from: 'Medidor',
-            foreignField: '_id',
-            localField: 'lectura.medidor',
-            as: 'medidor',
-          },
-        },
-
-        {
-          $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
-        },
-        {
-          $match: {
-            'medidor.flag': FlagE.nuevo,
-          },
-        },
-        ...(numeroMedidor
-          ? [
-              {
-                $match: {
-                  'medidor.numeroMedidor': numeroMedidor,
-                },
-              },
-            ]
-          : []),
-        {
-          $lookup: {
-            from: 'Cliente',
-            foreignField: '_id',
-            localField: 'medidor.cliente',
-            as: 'cliente',
-          },
-        },
-
-        {
-          $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
-        },
-        {
-          $match: {
-            'cliente.flag': FlagE.nuevo,
-          },
-        },
-        ...(ci
-          ? [
-              {
-                $match: {
-                  'cliente.ci': ci,
-                },
-              },
-            ]
-          : []),
-
-        ...(nombre
-          ? [
-              {
-                $match: {
-                  'cliente.nombre': nombre,
-                },
-              },
-            ]
-          : []),
-
-        ...(apellidoPaterno
-          ? [
-              {
-                $match: {
-                  'cliente.apellidoPaterno': apellidoPaterno,
-                },
-              },
-            ]
-          : []),
-
-        ...(apellidoMaterno
-          ? [
-              {
-                $match: {
-                  'cliente.apellidoMaterno': apellidoMaterno,
-                },
-              },
-            ]
-          : []),
-
-        {
-          $lookup: {
-            from: 'Tarifa',
-            foreignField: '_id',
-            localField: 'medidor.tarifa',
-            as: 'tarifa',
-          },
-        },
-
-        {
-          $unwind: { path: '$tarifa', preserveNullAndEmptyArrays: false },
-        },
-
-        {
-          $project: {
-            _id: 1,
-            codigoCliente: '$cliente.codigo',
-            ci: '$cliente.ci',
-            nombre: '$cliente.nombre',
-            apellidoPaterno: '$cliente.apellidoPaterno',
-            apellidoMaterno: '$cliente.apellidoMaterno',
-            tarifa: '$tarifa.nombre',
-            codigoMedidor: '$medidor.codigo',
-            numeroMedidor: '$medidor.numeroMedidor',
-            medidor: '$lectura.medidor',
-            lecturaActual: '$lectura.lecturaActual',
-            lecturaAnterior: '$lectura.lecturaAnterior',
-            consumoTotal: '$lectura.consumoTotal',
-            costoApagar: '$lectura.costoApagar',
-            mes: '$lectura.mes',
-            estado: '$lectura.estado',
-            costoPagado: 1,
-            fecha: {
-              $dateToString: {
-                format: '%Y-%m-%d',
-                date: '$fecha',
-              },
-            },
-            numeroPago: 1,
-          },
-        },
-        {
-          $facet: {
-            data: [
-              {
-                $skip:
-                  (buscadorClienteDto.pagina - 1) * buscadorClienteDto.limite,
-              },
-              {
-                $limit: buscadorClienteDto.limite,
-              },
-            ],
-            documentos: [
-              {
-                $count: 'total',
-              },
-            ],
-          },
-        },
-      ]);
+      const pagos = await this.obtenerPagos(buscadorClienteDto, true);
       const documentos = pagos[0].documentos[0]
         ? pagos[0].documentos[0].total
         : 1;
@@ -337,10 +157,9 @@ export class PagoService {
   }
 
   async descargarExcelPago(buscadorClienteDto: BuscarPagoClienteDto) {
-    const pagos = await this.descargarPagos(buscadorClienteDto);
+    const pagos = await this.obtenerPagos(buscadorClienteDto, false);
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet('hoja 1');
-
     worksheet.columns = [
       { header: 'codigoCliente', key: 'codigoCliente' },
       { header: 'ci', key: 'ci' },
@@ -387,9 +206,11 @@ export class PagoService {
 
     return workbook;
   }
-  private async descargarPagos(
+
+  private async obtenerPagos(
     buscadorClienteDto: BuscarPagoClienteDto,
-  ): Promise<PagosI[]> {
+    paginador: boolean,
+  ) {
     const {
       apellidoMaterno,
       apellidoPaterno,
@@ -399,161 +220,177 @@ export class PagoService {
       numeroMedidor,
     } = this.buscadorPagosCliente(buscadorClienteDto);
 
-    try {
-      const pagos: PagosI[] = await this.pago.aggregate([
-        {
-          $match: {
-            flag: FlagE.nuevo,
-            ...(fecha ? { fecha: fecha } : {}),
-          },
+    const pipeline: any[] = [
+      {
+        $match: {
+          flag: FlagE.nuevo,
+          ...(fecha ? { fecha: fecha } : {}),
         },
+      },
 
-        {
-          $lookup: {
-            from: 'Lectura',
-            foreignField: '_id',
-            localField: 'lectura',
-            as: 'lectura',
-          },
+      {
+        $lookup: {
+          from: 'Lectura',
+          foreignField: '_id',
+          localField: 'lectura',
+          as: 'lectura',
         },
+      },
 
-        {
-          $match: {
-            'lectura.flag': FlagE.nuevo,
-          },
+      {
+        $match: {
+          'lectura.flag': FlagE.nuevo,
         },
-        {
-          $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false },
-        },
+      },
+      {
+        $unwind: { path: '$lectura', preserveNullAndEmptyArrays: false },
+      },
 
-        {
-          $lookup: {
-            from: 'Medidor',
-            foreignField: '_id',
-            localField: 'lectura.medidor',
-            as: 'medidor',
-          },
+      {
+        $lookup: {
+          from: 'Medidor',
+          foreignField: '_id',
+          localField: 'lectura.medidor',
+          as: 'medidor',
         },
+      },
 
-        {
-          $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
+      {
+        $unwind: { path: '$medidor', preserveNullAndEmptyArrays: false },
+      },
+      {
+        $match: {
+          'medidor.flag': FlagE.nuevo,
         },
-        {
-          $match: {
-            'medidor.flag': FlagE.nuevo,
-          },
-        },
-        ...(numeroMedidor
-          ? [
-              {
-                $match: {
-                  'medidor.numeroMedidor': numeroMedidor,
-                },
-              },
-            ]
-          : []),
-        {
-          $lookup: {
-            from: 'Cliente',
-            foreignField: '_id',
-            localField: 'medidor.cliente',
-            as: 'cliente',
-          },
-        },
-
-        {
-          $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
-        },
-        {
-          $match: {
-            'cliente.flag': FlagE.nuevo,
-          },
-        },
-        ...(ci
-          ? [
-              {
-                $match: {
-                  'cliente.ci': ci,
-                },
-              },
-            ]
-          : []),
-
-        ...(nombre
-          ? [
-              {
-                $match: {
-                  'cliente.nombre': nombre,
-                },
-              },
-            ]
-          : []),
-
-        ...(apellidoPaterno
-          ? [
-              {
-                $match: {
-                  'cliente.apellidoPaterno': apellidoPaterno,
-                },
-              },
-            ]
-          : []),
-
-        ...(apellidoMaterno
-          ? [
-              {
-                $match: {
-                  'cliente.apellidoMaterno': apellidoMaterno,
-                },
-              },
-            ]
-          : []),
-
-        {
-          $lookup: {
-            from: 'Tarifa',
-            foreignField: '_id',
-            localField: 'medidor.tarifa',
-            as: 'tarifa',
-          },
-        },
-
-        {
-          $unwind: { path: '$tarifa', preserveNullAndEmptyArrays: false },
-        },
-
-        {
-          $project: {
-            _id: 1,
-            codigoCliente: '$cliente.codigo',
-            ci: '$cliente.ci',
-            nombre: '$cliente.nombre',
-            apellidoPaterno: '$cliente.apellidoPaterno',
-            apellidoMaterno: '$cliente.apellidoMaterno',
-            tarifa: '$tarifa.nombre',
-            codigoMedidor: '$medidor.codigo',
-            numeroMedidor: '$medidor.numeroMedidor',
-            medidor: '$lectura.medidor',
-            lecturaActual: '$lectura.lecturaActual',
-            lecturaAnterior: '$lectura.lecturaAnterior',
-            consumoTotal: '$lectura.consumoTotal',
-            costoApagar: '$lectura.costoApagar',
-            mes: '$lectura.mes',
-            estado: '$lectura.estado',
-            costoPagado: 1,
-            fecha: {
-              $dateToString: {
-                format: '%Y-%m-%d',
-                date: '$fecha',
+      },
+      ...(numeroMedidor
+        ? [
+            {
+              $match: {
+                'medidor.numeroMedidor': numeroMedidor,
               },
             },
-            numeroPago: 1,
-          },
+          ]
+        : []),
+      {
+        $lookup: {
+          from: 'Cliente',
+          foreignField: '_id',
+          localField: 'medidor.cliente',
+          as: 'cliente',
         },
-      ]);
-      return pagos;
-    } catch (error) {
-      throw error;
+      },
+
+      {
+        $unwind: { path: '$cliente', preserveNullAndEmptyArrays: false },
+      },
+      {
+        $match: {
+          'cliente.flag': FlagE.nuevo,
+        },
+      },
+      ...(ci
+        ? [
+            {
+              $match: {
+                'cliente.ci': ci,
+              },
+            },
+          ]
+        : []),
+
+      ...(nombre
+        ? [
+            {
+              $match: {
+                'cliente.nombre': nombre,
+              },
+            },
+          ]
+        : []),
+
+      ...(apellidoPaterno
+        ? [
+            {
+              $match: {
+                'cliente.apellidoPaterno': apellidoPaterno,
+              },
+            },
+          ]
+        : []),
+
+      ...(apellidoMaterno
+        ? [
+            {
+              $match: {
+                'cliente.apellidoMaterno': apellidoMaterno,
+              },
+            },
+          ]
+        : []),
+
+      {
+        $lookup: {
+          from: 'Tarifa',
+          foreignField: '_id',
+          localField: 'medidor.tarifa',
+          as: 'tarifa',
+        },
+      },
+
+      {
+        $unwind: { path: '$tarifa', preserveNullAndEmptyArrays: false },
+      },
+
+      {
+        $project: {
+          _id: 1,
+          codigoCliente: '$cliente.codigo',
+          ci: '$cliente.ci',
+          nombre: '$cliente.nombre',
+          apellidoPaterno: '$cliente.apellidoPaterno',
+          apellidoMaterno: '$cliente.apellidoMaterno',
+          tarifa: '$tarifa.nombre',
+          codigoMedidor: '$medidor.codigo',
+          numeroMedidor: '$medidor.numeroMedidor',
+          medidor: '$lectura.medidor',
+          lecturaActual: '$lectura.lecturaActual',
+          lecturaAnterior: '$lectura.lecturaAnterior',
+          consumoTotal: '$lectura.consumoTotal',
+          costoApagar: '$lectura.costoApagar',
+          mes: '$lectura.mes',
+          estado: '$lectura.estado',
+          costoPagado: 1,
+          fecha: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$fecha',
+            },
+          },
+          numeroPago: 1,
+        },
+      },
+    ];
+    if (paginador) {
+      pipeline.push({
+        $facet: {
+          data: [
+            {
+              $skip:
+                (buscadorClienteDto.pagina - 1) * buscadorClienteDto.limite,
+            },
+            {
+              $limit: buscadorClienteDto.limite,
+            },
+          ],
+          documentos: [
+            {
+              $count: 'total',
+            },
+          ],
+        },
+      });
     }
+    return this.pago.aggregate(pipeline);
   }
 }

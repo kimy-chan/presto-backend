@@ -6,7 +6,7 @@ import { Gasto } from './schema/gasto.schema';
 import { Model, Types } from 'mongoose';
 import { FlagE } from 'src/core-app/enums/flag';
 import { BuscadorGasto } from './dto/BuscarGasto.dto';
-
+import * as ExcelJS from 'exceljs';
 import { BuscadorGastoI } from './interface/buscadorGasto';
 
 @Injectable()
@@ -48,45 +48,7 @@ export class GastoService {
     });
 
     const paginas = Math.ceil(countDocuments / buscadorGasto.limite);
-    const gasto = await this.gasto.aggregate([
-      {
-        $match: { flag: FlagE.nuevo, ...filter },
-      },
-      {
-        $lookup: {
-          from: 'CategoriaGasto',
-          foreignField: '_id',
-          localField: 'categoriaGasto',
-          as: 'categoriaGasto',
-        },
-      },
-      {
-        $unwind: { path: '$categoriaGasto', preserveNullAndEmptyArrays: false },
-      },
-      {
-        $project: {
-          descripcion: 1,
-          unidadManejo: 1,
-          cantidad: 1,
-          factorValides: 1,
-          costoUnitario: 1,
-          costoAqo: 1,
-          fecha: {
-            $dateToString: {
-              format: '%Y-%m-%d',
-              date: '$fecha',
-            },
-          },
-          categoria: '$categoriaGasto.nombre',
-        },
-      },
-      {
-        $skip: (buscadorGasto.pagina - 1) * buscadorGasto.limite,
-      },
-      {
-        $limit: buscadorGasto.limite,
-      },
-    ]);
+    const gasto = await this.obtenerPagos(buscadorGasto, true);
 
     return { status: HttpStatus.OK, data: gasto, paginas: paginas };
   }
@@ -138,5 +100,85 @@ export class GastoService {
       { flag: FlagE.eliminado },
     );
     return { status: HttpStatus.OK };
+  }
+  async descargarGastoExcel(buscadorGasto: BuscadorGasto) {
+    const gastos = await this.obtenerPagos(buscadorGasto, false);
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet('hoja 1');
+    worksheet.columns = [
+      { header: 'categoria gasto', key: 'categoriaGasto' },
+      { header: 'descripcion', key: 'descripcion' },
+      { header: 'unida manejo', key: 'unidadManejo' },
+      { header: 'cantidad', key: 'cantidad' },
+      { header: 'costo unitario', key: 'costoUnitario' },
+      { header: 'factor validez', key: 'factorValidez' },
+      { header: 'costo año', key: 'costoAño' },
+      { header: 'fecha', key: 'fecha' },
+    ];
+    for (const gasto of gastos) {
+      worksheet.addRow({
+        categoriaGasto: gasto.categoria,
+        descripcion: gasto.descripcion,
+        unidadManejo: gasto.unidadManejo,
+        cantidad: gasto.cantidad,
+        costoUnitario: gasto.costoUnitario,
+        factorValidez: gasto.factorValides,
+        costoAño: gasto.costoAqo,
+        fecha: gasto.fecha,
+      });
+    }
+    return workbook;
+  }
+
+  private async obtenerPagos(buscadorGasto: BuscadorGasto, paginador: boolean) {
+    const filter = await this.buscadorGasto(buscadorGasto);
+
+    const pipeline: any[] = [
+      {
+        $match: { flag: FlagE.nuevo, ...filter },
+      },
+      {
+        $lookup: {
+          from: 'CategoriaGasto',
+          foreignField: '_id',
+          localField: 'categoriaGasto',
+          as: 'categoriaGasto',
+        },
+      },
+      {
+        $unwind: {
+          path: '$categoriaGasto',
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      {
+        $project: {
+          descripcion: 1,
+          unidadManejo: 1,
+          cantidad: 1,
+          factorValides: 1,
+          costoUnitario: 1,
+          costoAqo: 1,
+          fecha: {
+            $dateToString: {
+              format: '%Y-%m-%d',
+              date: '$fecha',
+            },
+          },
+          categoria: '$categoriaGasto.nombre',
+        },
+      },
+    ];
+    if (paginador) {
+      pipeline.push(
+        {
+          $skip: (buscadorGasto.pagina - 1) * buscadorGasto.limite,
+        },
+        {
+          $limit: buscadorGasto.limite,
+        },
+      );
+    }
+    return await this.gasto.aggregate(pipeline);
   }
 }

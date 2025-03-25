@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { BadRequestException, Module } from '@nestjs/common';
 import { ClienteModule } from './cliente/cliente.module';
 import { AutenticacionModule } from './autenticacion/autenticacion.module';
 import { GastoModule } from './gasto/gasto.module';
@@ -15,10 +15,17 @@ import { PermisoModule } from './permiso/permiso.module';
 import { APP_GUARD } from '@nestjs/core';
 import { TokenGuard } from './autenticacion/guards/token/token.guard';
 import { PermisoGuard } from './autenticacion/guards/permiso/permiso.guard';
+import { ConfigModule } from '@nestjs/config';
+import { coneccionBasesDeDatos } from './config/config';
+
+if (!coneccionBasesDeDatos) {
+  throw new BadRequestException('Ingrese la coneccion a la base de datos');
+}
 
 @Module({
   imports: [
-    MongooseModule.forRoot('mongodb://localhost:27017/presto'),
+    ConfigModule.forRoot({ isGlobal: true }),
+    MongooseModule.forRoot(coneccionBasesDeDatos),
 
     ClienteModule,
 

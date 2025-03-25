@@ -7,6 +7,7 @@ import {
   Param,
   Delete,
   Query,
+  Res,
 } from '@nestjs/common';
 import { MedidorService } from './medidor.service';
 import { CreateMedidorDto } from './dto/create-medidor.dto';
@@ -18,6 +19,7 @@ import { Permiso } from 'src/autenticacion/decorators/Permiso';
 import { PermisosE } from 'src/core-app/enums/permisos';
 import { PublicInterno } from 'src/autenticacion/decorators/PublicInterno';
 import { PaginadorDto } from 'src/core-app/dto/Paginador.dto';
+import { Response } from 'express';
 
 @Controller('medidor')
 export class MedidorController {
@@ -80,5 +82,27 @@ export class MedidorController {
   @Permiso([PermisosE.EDITAR_MEDIDOR])
   realizarCorteMedidor(@Param('id', ValidateIdPipe) id: Types.ObjectId) {
     return this.medidorService.realizarCorteMedidor(id);
+  }
+
+  @Get('descragar/excel/tres/lecturas/pendientes')
+  @Permiso([PermisosE.LISTAR_MEDIDOR])
+  async descargarExcelMedidorConTresLecturas(
+    @Res() response: Response,
+    @Query() paginadorDto: PaginadorDto,
+  ) {
+    const workbook =
+      await this.medidorService.descargarExcelMedidorConTresLecturas(
+        paginadorDto,
+      );
+    response.setHeader(
+      'Content-Type',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    );
+    response.setHeader(
+      'Content-Disposition',
+      'attachment; filename="export.xlsx"',
+    );
+    await workbook.xlsx.write(response);
+    return response.end();
   }
 }
